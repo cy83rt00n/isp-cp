@@ -1,0 +1,30 @@
+version: "3.0"
+
+services:
+  php:
+    container_name: "${PROJECT_NAME}_php"
+    build:
+      context: .
+      dockerfile: dockerfiles/php.dockerfile
+# It can be useful in future
+#    image: phalconphp/php-fpm
+    volumes:
+      - ./www:/var/www/html
+    environment:
+      project_database_name: ${DB_NAME}
+  nginx:
+    container_name: "${PROJECT_NAME}_www"
+    image: nginx:latest
+    volumes:
+      - ./www:/var/www/html
+      - ./config/nginx/0-phcrm.conf:/etc/nginx/conf.d/0-phcrm.conf
+    ports:
+      - "80:80"
+  mariadb:
+      container_name: "${PROJECT_NAME}_db"
+      image: mariadb:latest
+      environment:
+        MYSQL_ROOT_PASSWORD: secret
+        project_database_name: ${DB_NAME}
+      volumes:
+        - ./database/mysql:/docker-entrypoint-initdb.d
