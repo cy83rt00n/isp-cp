@@ -1,7 +1,7 @@
 <?php
 
-use Phalcon\Di\FactoryDefault\Cli as CliDI;
 use Phalcon\Cli\Console as ConsoleApp;
+use Phalcon\Di\FactoryDefault\Cli as CliDI;
 use Phalcon\Loader;
 
 // Using the CLI factory default services container
@@ -36,11 +36,11 @@ if (is_readable($configFile)) {
 
         $class = 'Phalcon\Db\Adapter\Pdo\\' . $config->database->adapter;
         $params = [
-            'host'     => $config->database->host,
+            'host' => $config->database->host,
             'username' => $config->database->username,
             'password' => $config->database->password,
-            'dbname'   => $config->database->dbname,
-            'charset'  => $config->database->charset
+            'dbname' => $config->database->dbname,
+            'charset' => $config->database->charset
         ];
 
         if ($config->database->adapter == 'Postgresql') {
@@ -81,10 +81,10 @@ try {
     // ..
     fwrite(STDERR, $e->getMessage() . PHP_EOL);
     exit(1);
-} catch (\Throwable $throwable) {
+} catch (Throwable $throwable) {
     fwrite(STDERR, $throwable->getMessage() . PHP_EOL);
     exit(1);
-} catch (\Exception $exception) {
+} catch (Exception $exception) {
     fwrite(STDERR, $exception->getMessage() . PHP_EOL);
     exit(1);
 }

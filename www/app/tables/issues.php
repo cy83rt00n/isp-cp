@@ -5,7 +5,7 @@ use Phalcon\Db\Index;
 
 return [
     'columns' => [
-        new Column("id",[
+        new Column("id", [
             "type" => Column::TYPE_INTEGER,
             "size" => 10,
             "notNull" => true,
@@ -16,7 +16,7 @@ return [
             "size" => 10,
             "notNull" => true
         ]),
-        new Column("resolve_date",[
+        new Column("resolve_date", [
             "type" => Column::TYPE_INTEGER,
             "size" => 10,
             "notNull" => true

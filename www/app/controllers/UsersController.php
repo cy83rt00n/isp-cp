@@ -1,6 +1,8 @@
 <?php
 
-class UsersController extends \Phalcon\Mvc\Controller
+use Phalcon\Mvc\Controller;
+
+class UsersController extends Controller
 {
 
     public function indexAction()

@@ -1,6 +1,8 @@
 <?php
 
-class SettingsController extends \Phalcon\Mvc\Controller
+use Phalcon\Mvc\Controller;
+
+class SettingsController extends Controller
 {
 
     public function indexAction()

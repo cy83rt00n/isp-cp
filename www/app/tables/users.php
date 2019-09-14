@@ -16,7 +16,7 @@ return [
             "size" => 255,
             "notNull" => true
         ]),
-        new Column("password",[
+        new Column("password", [
             "type" => Column::TYPE_VARCHAR,
             "size" => 255,
             "notNull" => true

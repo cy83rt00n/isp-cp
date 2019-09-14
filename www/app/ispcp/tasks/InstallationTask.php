@@ -8,7 +8,10 @@ class InstallationTask extends Task
     public function mainAction(array $argv)
     {
         $requiredTables = [
-            "users", "issues", "options", "addresses"
+            "users",
+            "issues",
+            "options",
+            "addresses"
         ];
         foreach ($requiredTables as $tableName) {
             if (!$this->db->tableExists($tableName)) {
@@ -18,8 +21,7 @@ class InstallationTask extends Task
                     echo "Including table description from " . $tableDef . PHP_EOL;
                     $definition = include($tableDef);
                     $this->db->createTable($tableName, null, $definition);
-                }
-                else {
+                } else {
                     echo "Table description file not found!" . PHP_EOL;
                 }
             }

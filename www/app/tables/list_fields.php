@@ -2,7 +2,6 @@
 
 use Phalcon\Db\Column;
 use Phalcon\Db\Index;
-use Phalcon\Db\Reference;
 
 return [
     'columns' => [
@@ -17,7 +16,7 @@ return [
             "size" => 10,
             "notNull" => true
         ]),
-        new Column("value",[
+        new Column("value", [
             "type" => Column::TYPE_VARCHAR,
             "size" => 255,
             "notNull" => false

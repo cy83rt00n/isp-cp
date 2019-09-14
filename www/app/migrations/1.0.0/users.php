@@ -2,7 +2,6 @@
 
 use Phalcon\Db\Column as Column;
 use Phalcon\Db\Index as Index;
-use Phalcon\Db\Reference as Reference;
 use Phalcon\Mvc\Model\Migration;
 
 

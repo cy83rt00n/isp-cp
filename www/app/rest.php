@@ -25,11 +25,11 @@ $di->setShared('db', function () {
 
     $class = 'Phalcon\Db\Adapter\Pdo\\' . $config->database->adapter;
     $params = [
-        'host'     => $config->database->host,
+        'host' => $config->database->host,
         'username' => $config->database->username,
         'password' => $config->database->password,
-        'dbname'   => $config->database->dbname,
-        'charset'  => $config->database->charset
+        'dbname' => $config->database->dbname,
+        'charset' => $config->database->charset
     ];
 
     if ($config->database->adapter == 'Postgresql') {
@@ -45,18 +45,23 @@ $config = $di->getConfig();
 
 include "config/loader.php";
 
+include "config/acl.php";
+
+$di->setShared("acl", $Acl);
+
 $app = new Micro();
 
 $issues = new MicroCollection();
-$issues->setHandler("IssuesController",true);
+$issues->setHandler("IssuesController", true);
 $issues->setPrefix("/api");
-$issues->get("/issues","index");
-$issues->get("/issues/{id}","item");
-$issues->get("/issues/report","report");
+$issues->get("/issues", "index");
+$issues->get("/issues/{id}", "item");
+$issues->get("/issues/report", "report");
+$issues->get("/issues/resolve/{id}", "resolve");
 $app->mount($issues);
 
-$app->notFound(function(){
-    echo json_encode(["success"=>false]);
+$app->notFound(function () {
+    echo json_encode(["success" => false]);
 });
 
 $app->handle();

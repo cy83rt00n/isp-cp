@@ -1,6 +1,7 @@
 <?php
 //echo var_export($_ENV, true);die();
 use Phalcon\Di\FactoryDefault;
+use Phalcon\Mvc\Application;
 
 error_reporting(E_ALL);
 
@@ -38,11 +39,11 @@ try {
     /**
      * Handle the request
      */
-    $application = new \Phalcon\Mvc\Application($di);
+    $application = new Application($di);
 
     echo $application->handle()->getContent();
 
-} catch (\Exception $e) {
+} catch (Exception $e) {
     echo $e->getMessage() . '<br>';
     echo '<pre>' . $e->getTraceAsString() . '</pre>';
 }

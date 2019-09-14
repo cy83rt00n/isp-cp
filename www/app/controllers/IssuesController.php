@@ -1,51 +1,188 @@
 <?php
 
-class IssuesController extends \Phalcon\Mvc\Controller
+use Phalcon\Mvc\Controller;
+
+class IssuesController extends Controller
 {
 
+    /**
+     * Gets index of issues.
+     */
     public function index()
     {
-        $index = Issue::find(["columns"=>"id,comment"]);
-        $this->response->setContent(json_encode([
-            "success" => boolval($index),
-            "controller" => __CLASS__,
-            "function" => __FUNCTION__,
-            "index" => json_encode($index)
-        ]));
-        $this->response->send();
+        /**
+         * Locals
+         */
+        $index = null;
+
+        /**
+         * Externals
+         */
+        $userID = $this->request->get("id", "absint");
+        $Acl = $this->getDI()->getAcl();
+
+
+        /**
+         * Checking access
+         */
+        $allowed = $Acl->isAllowed(AclHelper::$roles[$userID], "Issues", "index");
+
+        /**
+         * Granting access
+         */
+        if ($allowed) {
+            $index = Issue::find(["columns" => "id,report_date,resolve_date,comment"]);
+        }
+
+        /**
+         * Building response
+         */
+        $this->response
+            ->setContent(
+                json_encode([
+                    "success" => boolval($index),
+                    "index" => json_encode($index)
+                ])
+            )
+            ->send();
     }
 
-    public function item($id)
+    /**
+     * Gets full info about issue by its id.
+     * @param $issueID
+     */
+    public function item($issueID)
     {
-        $issue = Issue::findFirst($this->filter->sanitize($id,"absint"));
+        /**
+         * Locals
+         */
+        $issue = null;
 
-        $this->response->setContent(json_encode([
-            "success" => boolval($issue),
-            "controller" => __CLASS__,
-            "function" => __FUNCTION__,
-            "item" => $issue
-        ]));
-        $this->response->send();
+        /**
+         * Externals
+         */
+        $issueID = $this->filter->sanitize($issueID, "absint");
+        $userID = $this->request->get("id", "absint");
+        $Acl = $this->getDI()->getAcl();
+
+        /**
+         * Checking access
+         */
+
+        $allowed = $Acl->isAllowed(AclHelper::$roles[$userID], "Issues", "item");
+
+        /**
+         * Granting access
+         */
+        if ($allowed) {
+            $issue = Issue::findFirst($issueID);
+        }
+
+        /**
+         * Building response
+         */
+        $this->response
+            ->setContent(
+                json_encode([
+                    "success" => boolval($issue),
+                    "item" => $issue
+                ])
+            )
+            ->send();
     }
 
+    /**
+     * Creates new report.
+     */
     public function report()
     {
-        $issue = new Issue();
-        $issues = Issue::find();
-        $issue->report_date = time();
-        $issue->resolve_date = 0;
-        $issue->comment = "First or maybe not issue";
-        $issue->reporter = 1;
-        $issue->resolver = 0;
-        $success = $issue->save();
+        /**
+         * Locals
+         */
+        $success = false;
 
-        $this->response->setContent(json_encode([
-            "success" => $success,
-            "controller" => __CLASS__,
-            "function" => __FUNCTION__,
-            "item" => $issue
-        ]));
-        $this->response->send();
+        /**
+         * Externals
+         */
+        $userID = $this->getDI()->getRequest()->get("id", "absint");
+        $Acl = $this->getDI()->getAcl();
+
+        /**
+         * Checking access
+         */
+        $allowed = $Acl->isAllowed(AclHelper::$roles[$userID], "Issues", "report");
+
+        /**
+         * Granting access
+         */
+        if ($allowed) {
+            $issue = new Issue();
+            $issue->report_date = time();
+            $issue->resolve_date = 0;
+            $issue->comment = $this->request->get("comment", "string", "");
+            $issue->reporter = $userID;
+            $issue->resolver = 0;
+            $success = $issue->create();
+        }
+
+        /**
+         * Building response.
+         */
+        $this->response->setContent(
+            json_encode([
+                "success" => $success,
+                "item" => $issue
+            ])
+        )
+            ->send();
+    }
+
+    /**
+     * Updates issue by its id. Marked as resolved.
+     */
+
+    public function resolve($issueID)
+    {
+        /**
+         * Locals
+         */
+        $success = false;
+
+        /**
+         * Externals
+         */
+        $issueID = $this->filter->sanitize($issueID, "absint");
+        $userID = $this->getDI()->getRequest()->get("id", "absint");
+        $Acl = $this->getDI()->getAcl();
+        /**
+         * Checking access
+         */
+        $allowed = $Acl->isAllowed(AclHelper::$roles[$userID], "Issues", "report");
+
+        /**
+         * Granting access
+         */
+        if ($allowed) {
+            $issue = Issue::findFirst($issueID);
+            if (($issue instanceof Issue)) {
+                $issue->resolve_date = time();
+                $issue->comment = $this->request->get("comment", "string", $issue->comment);
+                $issue->resolver = $userID;
+                $success = $issue->update();
+            }
+        }
+
+        /**
+         * Building response.
+         */
+        $this->response->setContent(
+            json_encode([
+                "success" => $success,
+                "item" => $issue
+            ])
+        )
+            ->send();
+
     }
 
 }
