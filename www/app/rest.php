@@ -82,8 +82,15 @@ $terms->get("/terms/create", "create");
 $terms->get("/terms/delete/{id:[0-9]}", "delete");
 $app->mount($terms);
 
+$options = new MicroCollection();
+$options->setHandler("OptionsController", true);
+$options->setPrefix("/api/options");
+$options->get("/set/{name}/{value}", "set");
+$options->get("/get/{name}", "get");
+$app->mount($options);
+
 $app->notFound(function () {
-    echo json_encode(["success" => false]);
+    echo json_encode(["success" => false, "error" => 404]);
 });
 
 $app->handle();
