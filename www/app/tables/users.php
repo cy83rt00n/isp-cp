@@ -20,6 +20,11 @@ return [
             "type" => Column::TYPE_VARCHAR,
             "size" => 255,
             "notNull" => true
+        ]),
+        new Column("roleId", [
+            "type" => Column::TYPE_INTEGER,
+            "size" => 10,
+            "notNull" => true
         ])
     ],
     'indexes' => [

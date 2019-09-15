@@ -11,15 +11,20 @@ return [
             "notNull" => true,
             "autoIncrement" => true
         ]),
-        new Column("list_id", [
-            "type" => Column::TYPE_INTEGER,
-            "size" => 10,
-            "notNull" => true
-        ]),
-        new Column("value", [
+        new Column("slug", [
             "type" => Column::TYPE_VARCHAR,
             "size" => 255,
-            "notNull" => false
+            "notNull" => true
+        ]),
+        new Column("title", [
+            "type" => Column::TYPE_VARCHAR,
+            "size" => 255
+        ]),
+        new Column("parentId", [
+            "type" => Column::TYPE_INTEGER,
+            "size" => 10,
+            "notNull" => true,
+            "default" => 0
         ])
     ],
     'indexes' => [

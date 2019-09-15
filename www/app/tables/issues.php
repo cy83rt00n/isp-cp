@@ -23,8 +23,7 @@ return [
         ]),
         new Column("comment", [
             "type" => Column::TYPE_VARCHAR,
-            "size" => 255,
-            "notNull" => true
+            "size" => 255
         ]),
         new Column("reporter", [
             "type" => Column::TYPE_INTEGER,

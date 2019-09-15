@@ -11,10 +11,14 @@ return [
             "notNull" => true,
             "autoIncrement" => true
         ]),
-        new Column("name", [
+        new Column("key", [
             "type" => Column::TYPE_VARCHAR,
             "size" => 255,
             "notNull" => true
+        ]),
+        new Column("value", [
+            "type" => Column::TYPE_VARCHAR,
+            "size" => 1024
         ])
     ],
     'indexes' => [

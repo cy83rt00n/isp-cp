@@ -1,8 +1,6 @@
 <?php
 
-use Phalcon\Mvc\Controller;
-
-class IssuesController extends Controller
+class IssuesController extends ControllerBase
 {
 
     /**
@@ -15,17 +13,11 @@ class IssuesController extends Controller
          */
         $index = null;
 
-        /**
-         * Externals
-         */
-        $userID = $this->request->get("id", "absint");
-        $Acl = $this->getDI()->getAcl();
-
 
         /**
          * Checking access
          */
-        $allowed = $Acl->isAllowed(AclHelper::$roles[$userID], "Issues", "index");
+        $allowed = $this->isAllowed(__FUNCTION__);
 
         /**
          * Granting access
@@ -41,7 +33,8 @@ class IssuesController extends Controller
             ->setContent(
                 json_encode([
                     "success" => boolval($index),
-                    "index" => json_encode($index)
+                    "index" => json_encode($index),
+                    "allowed" => $allowed
                 ])
             )
             ->send();
@@ -51,31 +44,29 @@ class IssuesController extends Controller
      * Gets full info about issue by its id.
      * @param $issueID
      */
-    public function item($issueID)
+    public function item($itemID)
     {
         /**
          * Locals
          */
-        $issue = null;
+        $item = null;
 
         /**
          * Externals
          */
-        $issueID = $this->filter->sanitize($issueID, "absint");
-        $userID = $this->request->get("id", "absint");
-        $Acl = $this->getDI()->getAcl();
+        $itemID = $this->filter->sanitize($itemID, "absint", array_flip(AclHelper::$roles)["Guest"]);
 
         /**
          * Checking access
          */
 
-        $allowed = $Acl->isAllowed(AclHelper::$roles[$userID], "Issues", "item");
+        $allowed = $allowed = $this->isAllowed(__FUNCTION__);
 
         /**
          * Granting access
          */
         if ($allowed) {
-            $issue = Issue::findFirst($issueID);
+            $item = Issue::findFirst($itemID);
         }
 
         /**
@@ -84,8 +75,8 @@ class IssuesController extends Controller
         $this->response
             ->setContent(
                 json_encode([
-                    "success" => boolval($issue),
-                    "item" => $issue
+                    "success" => boolval($item),
+                    "item" => $item
                 ])
             )
             ->send();
@@ -104,13 +95,12 @@ class IssuesController extends Controller
         /**
          * Externals
          */
-        $userID = $this->getDI()->getRequest()->get("id", "absint");
-        $Acl = $this->getDI()->getAcl();
+        $userID = $this->currentUserId();
 
         /**
          * Checking access
          */
-        $allowed = $Acl->isAllowed(AclHelper::$roles[$userID], "Issues", "report");
+        $allowed = $this->isAllowed(__FUNCTION__);
 
         /**
          * Granting access
@@ -152,12 +142,11 @@ class IssuesController extends Controller
          * Externals
          */
         $issueID = $this->filter->sanitize($issueID, "absint");
-        $userID = $this->getDI()->getRequest()->get("id", "absint");
-        $Acl = $this->getDI()->getAcl();
+        $userID = $this->currentUserId();
         /**
          * Checking access
          */
-        $allowed = $Acl->isAllowed(AclHelper::$roles[$userID], "Issues", "report");
+        $allowed = $this->isAllowed(__FUNCTION__);
 
         /**
          * Granting access
