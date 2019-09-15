@@ -12,6 +12,17 @@ services:
       - ./www:/var/www/html
     environment:
       project_database_name: ${DB_NAME}
+  react:
+    container_name: "${PROJECT_NAME}_react"
+    build:
+      context: .
+      dockerfile: dockerfiles/react.dockerfile
+    working_dir: /app
+    volumes:
+      - ./www/react-fe:/app
+    ports:
+      - "80:3000"
+      - "35729:35729"
   nginx:
     container_name: "${PROJECT_NAME}_www"
     image: nginx:latest
@@ -19,7 +30,7 @@ services:
       - ./www:/var/www/html
       - ./config/nginx/0-phcrm.conf:/etc/nginx/conf.d/0-phcrm.conf
     ports:
-      - "80:80"
+      - "8080:80"
   mariadb:
       container_name: "${PROJECT_NAME}_db"
       image: mariadb:latest
