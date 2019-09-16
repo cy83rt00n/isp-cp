@@ -22,8 +22,7 @@ return [
             "notNull" => true
         ]),
         new Column("comment", [
-            "type" => Column::TYPE_VARCHAR,
-            "size" => 255
+            "type" => Column::TYPE_TEXT
         ]),
         new Column("reporter", [
             "type" => Column::TYPE_INTEGER,

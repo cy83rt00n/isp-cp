@@ -16,20 +16,25 @@ class TermsController extends ControllerBase
          */
         $slug = $this->filter->sanitize($slug, "string");
 
-
-        $term = Term::findFirst([
-            "slug=:slug:",
-            "bind" => [
-                "slug" => $slug
-            ]
-        ]);
+        if ($slug == "root") {
+            $term = new stdClass();
+            $term->id = 0;
+            $term->slug = "root";
+            $term->title = "";
+            $term->parent = 0;
+            $children = Term::find(["parentId=:termId:", "bind" => ["termId" => $term->id]]);
+        } else {
+            $children = Term::find([
+                "slug=:slug:",
+                "bind" => [
+                    "slug" => $slug
+                ]
+            ]);
+            $term = Term::findFirst($children[0]->parentId);
+        }
 
         if ($term) {
             $success = true;
-            $children = Term::find(["parent=:termId:", "bind" => ["termId" => $term->id]]);
-            foreach ($children as $t) {
-                var_dump($t->title);
-            }
         }
 
         /**
@@ -38,8 +43,10 @@ class TermsController extends ControllerBase
         $this->response->setContent(
             json_encode([
                 "success" => $success,
-                "item" => $term,
-                "children" => $children
+                "data" => [
+                    "term" => $term,
+                    "children" => $children
+                ]
             ])
         )
             ->send();
@@ -71,7 +78,9 @@ class TermsController extends ControllerBase
         $this->response->setContent(
             json_encode([
                 "success" => $success,
-                "item" => $term
+                "data" => [
+                    "term" => $term
+                ]
             ])
         )
             ->send();
@@ -108,7 +117,9 @@ class TermsController extends ControllerBase
         $this->response->setContent(
             json_encode([
                 "success" => $success,
-                "item" => $term
+                "data" => [
+                    "item" => $term
+                ]
             ])
         )
             ->send();

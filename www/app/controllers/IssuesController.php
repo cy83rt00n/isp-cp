@@ -127,6 +127,47 @@ class IssuesController extends ControllerBase
             ->send();
     }
 
+    public function update($issueID)
+    {
+        /**
+         * Locals
+         */
+        $success = false;
+
+        /**
+         * Externals
+         */
+        $issueID = $this->filter->sanitize($issueID, "absint");
+        $userID = $this->currentUserId();
+
+        /**
+         * Checking access
+         */
+        $allowed = $this->isAllowed(__FUNCTION__);
+
+        /**
+         * Granting access
+         */
+        if ($allowed) {
+            $issue = Issue::findFirst($issueID);
+            if (($issue instanceof Issue)) {
+                $issue->comment = $this->request->get("comment", "string", $issue->comment);
+                $success = $issue->update();
+            }
+        }
+
+        /**
+         * Building response.
+         */
+        $this->response->setContent(
+            json_encode([
+                "success" => $success,
+                "item" => $issue
+            ])
+        )
+            ->send();
+    }
+
     /**
      * Updates issue by its id. Marked as resolved.
      */

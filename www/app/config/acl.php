@@ -23,7 +23,7 @@ $Acl->addRole(new Acl\Role("User"));
 $Acl->addRole(new Acl\Role("Guest"));
 
 $Issues = new Acl\Resource("Issues");
-$Acl->addResource($Issues, ["index", "item", "report", "resolve"]);
+$Acl->addResource($Issues, ["index", "item", "report", "update", "resolve"]);
 
 $Acl->allow("Guest", "Issues", "index");
 

@@ -58,6 +58,7 @@ $issues->setHandler("IssuesController", true);
 $issues->setPrefix("/api");
 $issues->get("/issues", "index");
 $issues->get("/issues/{id}", "item");
+$issues->get("/issues/update/{id}", "update");
 $issues->get("/issues/report", "report");
 $issues->get("/issues/resolve/{id}", "resolve");
 $app->mount($issues);
