@@ -19,7 +19,7 @@ services:
       dockerfile: dockerfiles/react.dockerfile
     working_dir: /app
     volumes:
-      - ./www/react-fe:/app
+      - ./www/react:/app
     ports:
       - "80:3000"
       - "35729:35729"

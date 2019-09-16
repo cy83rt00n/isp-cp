@@ -1,8 +1,8 @@
 FROM node:8
 
-ADD ./www/react-fe/yarn.lock /yarn.lock
-ADD ./www/react-fe/package.json /package.json
-ADD ./www/react-fe/run.sh /run.sh
+ADD ./www/react/yarn.lock /yarn.lock
+ADD ./www/react/package.json /package.json
+ADD ./www/react/run.sh /run.sh
 
 ENV NODE_PATH=/node_modules
 ENV PATH=$PATH:/node_modules/.bin
