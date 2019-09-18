@@ -1,6 +1,6 @@
 export default new class IspCpConfig {
     ApiProtocol = "http";
-    ApiHost = "localhost";
+    ApiHost = "isp-cp.loc";
     ApiPort = 8080;
     ApiUrlPrefix = "/api";
 

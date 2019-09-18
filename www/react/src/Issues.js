@@ -48,7 +48,7 @@ export default class Issues extends React.Component {
     }
 
     reportIssue(comment) {
-        let url = IspCpConfig.ApiRootRequest("/issues/report/?comment=\"" + comment + "\"");
+        let url = IspCpConfig.ApiRootRequest("/issues/report/?comment=" + comment);
         axios.get(url).then(
             result => {
                 this.componentDidMount()
@@ -66,7 +66,7 @@ export default class Issues extends React.Component {
     }
 
     updateIssue(id, comment) {
-        let url = IspCpConfig.ApiRootRequest("/issues/update/" + id + "?comment=\"" + comment + "\"");
+        let url = IspCpConfig.ApiRootRequest("/issues/update/" + id + "?comment=" + comment);
         axios.get(url).then(
             result => {
                 this.componentDidMount()
@@ -112,7 +112,7 @@ export default class Issues extends React.Component {
                                     <TextField
                                         label="Комментарий"
                                         name={"comment"}
-                                        defaultValue={he.decode(issue.comment)}
+                                        defaultValue={issue.comment ? he.decode(issue.comment) : ''}
                                         margin="normal"
                                         variant="outlined"
                                     />

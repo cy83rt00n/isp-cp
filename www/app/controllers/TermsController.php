@@ -3,7 +3,7 @@
 class TermsController extends ControllerBase
 {
 
-    public function index($slug = "")
+    public function index($slug = "root")
     {
         /**
          * Locals
@@ -21,7 +21,7 @@ class TermsController extends ControllerBase
             $term->id = 0;
             $term->slug = "root";
             $term->title = "";
-            $term->parent = 0;
+            $term->parentId = 0;
             $children = Term::find(["parentId=:termId:", "bind" => ["termId" => $term->id]]);
         } else {
             $children = Term::find([
@@ -43,10 +43,8 @@ class TermsController extends ControllerBase
         $this->response->setContent(
             json_encode([
                 "success" => $success,
-                "data" => [
-                    "term" => $term,
-                    "children" => $children
-                ]
+                "term" => $term,
+                "children" => $children
             ])
         )
             ->send();
@@ -78,9 +76,8 @@ class TermsController extends ControllerBase
         $this->response->setContent(
             json_encode([
                 "success" => $success,
-                "data" => [
-                    "term" => $term
-                ]
+                "term" => $term,
+                "chldren" => []
             ])
         )
             ->send();
@@ -117,9 +114,6 @@ class TermsController extends ControllerBase
         $this->response->setContent(
             json_encode([
                 "success" => $success,
-                "data" => [
-                    "item" => $term
-                ]
             ])
         )
             ->send();

@@ -149,7 +149,7 @@ class IssuesController extends ControllerBase
          * Granting access
          */
         if ($allowed) {
-            $issue = Issue::findFirst($issueID);
+            $issue = Issue::findFirst(["id=:issueId: and resolve_date=0", "bind" => ["issueId" => $issueID]]);
             if (($issue instanceof Issue)) {
                 $issue->comment = $this->request->get("comment", "string", $issue->comment);
                 $success = $issue->update();
