@@ -1,4 +1,5 @@
 import React from 'react';
+import {BrowserRouter as Router, Link as RLink, Route} from "react-router-dom";
 import axios from 'axios';
 import IspCpConfig from "./IspCpConfig";
 import {slugify} from 'transliteration';
@@ -19,7 +20,6 @@ import Term from "./models/Term";
 
 var he = require('he');
 
-
 export default class Terms extends React.Component {
 
     updateTimeout;
@@ -28,7 +28,7 @@ export default class Terms extends React.Component {
         super(props);
         this.state = {
             success: false,
-            term: Term,
+            term: {},
             children: {},
             create: Term
         };
@@ -61,42 +61,44 @@ export default class Terms extends React.Component {
 
     onSubmit(event) {
         event.preventDefault();
-        console.log(event.currentTarget.type);
-        if (event.currentTarget.dataset.create)
+        if (event.target.create)
             this.createTerm(event.target.slug.value, event.target.title.value, event.target.parent.value);
         if (event.currentTarget.dataset.delete)
-            this.deleteTerm(event.target.dataset.delete);
+            this.deleteTerm(event.currentTarget.dataset.delete);
     }
 
     onParentSelect(event) {
-        console.log(event.target.selectedOptions.item(0).dataset.slug);
-        window.Selected = event.target.selectedOptions;
-        console.log(this.state.create);
-        this.state.create.setState({
-            parentId: event.target.value,
-            slug: event.target.selectedOptions.item(0).dataset.slug
+
+        this.setState({
+            create : new Term({
+                parentId: event.target.value,
+                slug:event.target.selectedOptions.item(0).dataset.slug
+            })
         });
+        // this.state.create.parentId = event.target.value;
+        // this.state.create.slug = event.target.selectedOptions.item(0).dataset.slug;
+
         console.log(this.state.create);
     }
 
 
     componentDidMount() {
-        let apiPath = IspCpConfig.ApiRootRequest("/terms/root/");
-        let location = window.location.pathname;
-        if (location.startsWith("/terms/") && location.length > "/terms/") {
-            apiPath = IspCpConfig.ApiRootRequest(window.location.pathname);
+        let apiPath = IspCpConfig.ApiRootRequest("/terms/");
+        let location = this.props.location.pathname;
+        if (location.startsWith("/terms/") && location.length > "/terms/".length) {
+            apiPath = IspCpConfig.ApiRootRequest(location);
         }
 
         axios.get(apiPath)
             .then(
                 result => {
+                    console.log(result);
                     this.setState({
                         success: result.data.success,
                         term: result.data.term,
                         children: result.data.children,
-                        create: new Term({})
+                        create: new Term({parentId: result.data.term.id, slug: slugify(result.data.term.title)})
                     });
-                    this.state.create.componentDidMount();
                 }
             )
             .catch(reason => {
@@ -104,25 +106,33 @@ export default class Terms extends React.Component {
             })
     }
 
+    componentDidUpdate(prevProps) {
+        console.log(prevProps.location);
+        console.log(this.props.location);
+        if (this.props.location !== prevProps.location) {
+            this.componentDidMount();
+        }
+    }
+
     render() {
+
         const {term} = this.state.term;
         const {children} = this.state.children;
         if (this.state.success) {
             // setTimeout(this.componentDidMount, this.updateTimeout);
-            console.log(this.state.create);
+
             return (
                 <div>
                     <List>
-                        <Term id={this.state.term.id} title={this.state.term.title} slug={this.state.term.slug}/>
                         {this.state.children.map(child =>
-                            <Term id={child.id} title={child.title} slug={child.slug} onClick={this.onSubmit}/>
+                            <TermsListItem key={child.id} id={child.id} title={child.title} slug={child.slug} onClick={this.onSubmit}/>
                         )}
                     </List>
                     <TermsForm
                         term={this.state.term}
-                        slug={this.state.create.props.slug}
-                        parentId={this.state.create.props.parentId}
-                        title={this.state.create.props.title}
+                        slug={this.state.create.slug}
+                        parentId={this.state.create.parentId}
+                        title={this.state.create.title}
                         children={this.state.children}
                         onSubmit={this.onSubmit}
                         onChange={this.onParentSelect}
@@ -132,9 +142,17 @@ export default class Terms extends React.Component {
         }
         return ('');
     }
-
 }
 
+function TermsListItem(props) {
+    if (!props.id) return '';
+    return(
+        <ListItem>
+            <Link to={"/terms/" + props.id} component={RLink}>{props.title}</Link>
+            <Button type={"button"} data-delete={props.id} onClick={props.onClick}>DELETE</Button>
+        </ListItem>
+    );
+}
 
 function TermsForm(props) {
     const term = props.term || {id: false};
@@ -143,7 +161,7 @@ function TermsForm(props) {
     return (
         <form onSubmit={props.onSubmit}>
             <Input type={"hidden"} name={"create"} value={0}/>
-            <Input type={"hidden"} name={"slug"} id="new-term-slug" value={props.slug}/>
+            <Input type={"hidden"} name={"slug"} value={props.slug}/>
             <TextField
                 label={"Название"}
                 name={"title"}
@@ -162,12 +180,11 @@ function TermsForm(props) {
                         id: 'parent-id-select',
                     }}
                     value={props.parentId}
-                    displayEmpty
                 >
-                    <option value={0} data-slug={"root"}>Корень</option>
-                    {term.id && <option value={term.id} selected={true}>{term.title}</option>}
+                    <option key={0} value={0} data-slug={"root"}>Корень</option>
+                    {term.id && <option key={term.id} value={term.id}>{term.title}</option>}
                     {children.map(child =>
-                        <option value={child.id} data-slug={slugify(child.title)}>{child.title}</option>
+                        <option key={child.id} value={child.id} data-slug={slugify(child.title)}>{child.title}</option>
                     )}
                 </NativeSelect>
             </FormControl>
@@ -176,3 +193,6 @@ function TermsForm(props) {
         </form>
     );
 }
+
+
+

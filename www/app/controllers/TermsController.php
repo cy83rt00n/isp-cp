@@ -3,51 +3,52 @@
 class TermsController extends ControllerBase
 {
 
-    public function index($slug = "root")
+    public function index($parentId=0)
     {
         /**
          * Locals
          */
-        $success = false;
-        $children = false;
+
+        $term           = new Term();
+        $term->id       = 0;
+        $term->slug     = "root";
+        $term->title    = "root";
+        $term->parentId = 0;
+        $response = ["success"=>false, "term"=>$term, "children"=>[]];
 
         /**
          * Externals
          */
-        $slug = $this->filter->sanitize($slug, "string");
+        $slug = $this->filter->sanitize($parentId, "absint");
 
-        if ($slug == "root") {
-            $term = new stdClass();
-            $term->id = 0;
-            $term->slug = "root";
-            $term->title = "";
-            $term->parentId = 0;
-            $children = Term::find(["parentId=:termId:", "bind" => ["termId" => $term->id]]);
-        } else {
-            $children = Term::find([
-                "slug=:slug:",
-                "bind" => [
-                    "slug" => $slug
-                ]
-            ]);
-            $term = Term::findFirst($children[0]->parentId);
+        /**
+         * Gathering data
+         */
+        $children = Term::find([
+            "parentId=:parentId:",
+            "bind" => [
+                "parentId" => $parentId
+            ]
+        ]);
+
+        foreach ($children as $child) {
+            $response["children"][] = $child;
+        }
+
+        if ($slug !== 0) {
+            $term = Term::findFirst($parentId);
         }
 
         if ($term) {
-            $success = true;
+            $response["success"] = true;
+            $response["term"]    = $term;
         }
 
         /**
          * Building response.
          */
-        $this->response->setContent(
-            json_encode([
-                "success" => $success,
-                "term" => $term,
-                "children" => $children
-            ])
-        )
-            ->send();
+        $content = json_encode($response);
+        $this->response->setContent($content)->send();
     }
 
     public function create()
@@ -55,32 +56,32 @@ class TermsController extends ControllerBase
         /**
          * Locals
          */
-        $success = false;
+        $response = ["success"=>false, "term"=>null, "children"=>[]];
 
         /**
-         * Cheking permissions
+         * Checking permissions
          */
         $allowed = $this->isAllowed(__FUNCTION__);
 
+        /**
+         * Gathering data
+         */
+        $response["success"] = false;
         if ($allowed) {
-            $term = new Term();
-            $term->slug = $this->request->get("slug", "string", '');
-            $term->title = $this->request->get("title", "string", '');
-            $term->parentId = $this->request->get("parent", "absint", 0);
-            $success = $term->create();
+            $term                = new Term();
+            $term->slug          = $this->request->get("slug", "string", '');
+            $term->title         = $this->request->get("title", "string", '');
+            $term->parentId      = $this->request->get("parent", "absint", 0);
+            $response["success"] = $term->create();
+            $response["term"]    = $term;
+            $response["children"] = [];
         }
 
         /**
          * Building response.
          */
-        $this->response->setContent(
-            json_encode([
-                "success" => $success,
-                "term" => $term,
-                "chldren" => []
-            ])
-        )
-            ->send();
+        $content = json_encode($response);
+        $this->response->setContent($content)->send();
 
     }
 
@@ -89,7 +90,7 @@ class TermsController extends ControllerBase
         /**
          * Locals
          */
-        $success = false;
+        $response = ["success"];
 
         /**
          * Externals
@@ -101,23 +102,37 @@ class TermsController extends ControllerBase
          */
         $allowed = $this->isAllowed(__FUNCTION__);
 
+        /**
+         * Gathering data
+         */
+        $response["success"] = false;
         if ($allowed) {
             $term = Term::findFirst($termId);
             if ($term) {
-                $success = $term->delete();
+                $response["success"] = $term->delete();
             }
         }
 
         /**
          * Building response.
          */
-        $this->response->setContent(
-            json_encode([
-                "success" => $success,
-            ])
-        )
-            ->send();
+        $content = json_encode($response);
+        $this->response->setContent($content)->send();
 
+    }
+
+    public function schema()
+    {
+
+        /**
+         * Building response.
+         */
+        $content = json_encode([
+            "success"  => true,
+            "term"     => array_keys(get_class_vars("Term")),
+            "children" => json_encode(["termId" => array_keys(get_class_vars("Term"))])
+        ]);
+        $this->response->setContent($content)->send();
     }
 
 }

@@ -1,4 +1,4 @@
-export default new class IspCpConfig {
+class IspCpConfig {
     ApiProtocol = "http";
     ApiHost = "isp-cp.loc";
     ApiPort = 8080;
@@ -22,9 +22,9 @@ export default new class IspCpConfig {
             return this.ApiRequest(path + "&role=99999999999&passwd=secret")
         }
     }
-}
+};
 
-export class IspCpHelper {
+class IspCpHelper {
     getUriParams() {
         let params = window.location.search.substr(1).split("&");
         console.log(params);
@@ -34,4 +34,12 @@ export class IspCpHelper {
         });
         return pairs;
     }
-}
+};
+
+export default new IspCpConfig();
+
+let config = new IspCpConfig();
+let helper = new IspCpHelper();
+
+export {config as IspCpConfig};
+export {helper as IspCpHelper};
