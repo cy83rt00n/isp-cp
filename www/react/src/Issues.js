@@ -45,7 +45,6 @@ export default class Issues extends React.Component {
         event.preventDefault();
         console.log(event.currentTarget);
         window.Target = event.currentTarget;
-
         // if (event.currentTarget.dataset.report) {
         //     var issueForm = document.querySelector("form#issue-report");
         //     console.log("Report : " + issueForm.comment.value);
@@ -55,12 +54,13 @@ export default class Issues extends React.Component {
             // var issueForm = document.querySelector("form#issue-edit-" + event.currentTarget.dataset.update);
             console.log("Udate " + event.currentTarget.dataset.update);
             // window.issueForm = issueForm;
-            // this.updateIssue(event.currentTarget.dataset.update, issueForm.comment.value);
+            const comment = document.querySelector("#comment-" + event.currentTarget.dataset.update).value;
+            this.updateIssue(event.currentTarget.dataset.update, comment);
         }
         if (event.currentTarget.dataset.resolve) {
             // var issueForm = document.querySelector("form#issue-edit-" + event.currentTarget.dataset.resolve);
             console.log("Resolve " + event.currentTarget.dataset.resolve);
-            // this.resolveIssue(event.currentTarget.dataset.resolve);
+            this.resolveIssue(event.currentTarget.dataset.resolve);
         }
     }
 
