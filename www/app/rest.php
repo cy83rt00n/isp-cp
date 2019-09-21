@@ -78,6 +78,7 @@ $terms = new MicroCollection();
 $terms->setHandler("TermsController", true);
 $terms->setPrefix("/api");
 $terms->get("/terms", "index");
+$terms->get("/term/{id:[0-9]+}", "item");
 $terms->get("/terms/{parentId:[0-9]+}", "index");
 $terms->get("/terms/create", "create");
 $terms->get("/terms/delete/{id:[0-9]+}", "delete");

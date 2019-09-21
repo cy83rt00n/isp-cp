@@ -2,6 +2,7 @@ import React from 'react';
 import axios from 'axios';
 import {IspCpConfig} from "./IspCpConfig";
 import Button from "@material-ui/core/Button";
+import Paper from "@material-ui/core/Paper";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import TextField from '@material-ui/core/TextField';
 
@@ -12,13 +13,17 @@ import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import NativeSelect from '@material-ui/core/NativeSelect';
 import {slugify} from 'transliteration';
+import Modal from '@material-ui/core/Modal';
+import { makeStyles } from '@material-ui/core/styles';
 
 
 var he = require('he');
 
+var issusesInstance;
 
 export default class Issues extends React.Component {
     updateTimeout = 10000;
+    modalFormOpen = true;
 
     constructor(props) {
         super(props);
@@ -28,6 +33,12 @@ export default class Issues extends React.Component {
         };
         this.handleSubmit = this.handleSubmit.bind(this);
         this.componentDidMount = this.componentDidMount.bind(this);
+        issusesInstance = this;
+    }
+
+    callUpdate()
+    {
+        this.componentDidMount();
     }
 
     handleSubmit(event) {
@@ -51,15 +62,6 @@ export default class Issues extends React.Component {
             console.log("Resolve " + event.currentTarget.dataset.resolve);
             // this.resolveIssue(event.currentTarget.dataset.resolve);
         }
-    }
-
-    reportIssue(comment) {
-        let url = IspCpConfig.ApiRootRequest("/issues/report/?comment=" + comment);
-        axios.get(url).then(
-            result => {
-                this.componentDidMount()
-            }
-        );
     }
 
     resolveIssue(id) {
@@ -100,77 +102,162 @@ export default class Issues extends React.Component {
              )
     }
 
+
     render() {
         if (this.state.success) {
             const data = JSON.parse(this.state.data);
             // setTimeout(this.componentDidMount, this.updateTimeout);
             return (
-                <Table>
-                    <TableHead>
-                        <TableRow>
-                            <TableCell>Issue</TableCell>
-                            <TableCell>Reported </TableCell>
-                            <TableCell>Resolved</TableCell>
-                            <TableCell>Comment</TableCell>
-                            <TableCell></TableCell>
-                        </TableRow>
-                    </TableHead>
-                    <TableBody>{data.map(issue =>
-                        <TableRow key={"issue-" + issue.id}>
-                            <TableCell>{issue.id}</TableCell>
-                            <TableCell>{new Date(parseInt(issue.report_date) * 1000).toLocaleDateString()}</TableCell>
-                            <TableCell>
-                                {
-                                    (issue.resolve_date > 0)
-                                        ? new Date(parseInt(issue.resolve_date) * 1000).toLocaleDateString()
-                                        : ''
-                                }
-                            </TableCell>
-                            <TableCell>
-                                <AddressList location={"/terms/15"} id={"address-" + issue.id} value={0}/>
-                                <HousesList location={"/terms/16"} id={"address-" + issue.id} value={0}/>
-                                <ApartmentsList location={"/terms/19"} id={"address-" + issue.id} value={0}/>
-                            </TableCell>
-                            <TableCell>
-                                <TextField
-                                    label="Комментарий"
-                                    id={"comment-" + issue.id}
-                                    defaultValue={issue.comment ? he.decode(issue.comment) : ''}
-                                    margin="normal"
-                                    variant="outlined"
-                                /></TableCell>
-                            <TableCell>
-                                <ButtonGroup size="small">
-                                    <Button type="button" onClick={this.handleSubmit} data-update={issue.id}
-                                            color="primary">
-                                        UPDATE
-                                    </Button>
-                                    <Button type="button" onClick={this.handleSubmit} data-resolve={issue.id}
-                                            color="secondary">
-                                        RESOLVE
-                                    </Button>
-                                </ButtonGroup>
-                            </TableCell>
-                        </TableRow>
-                    )}
-                    </TableBody>
-                </Table>
+                <Paper>
+                    <Table>
+                        <TableHead>
+                            <TableRow>
+                                <TableCell>Issue</TableCell>
+                                <TableCell>Reported </TableCell>
+                                <TableCell>Resolved</TableCell>
+                                <TableCell>Address</TableCell>
+                                <TableCell>Comment</TableCell>
+                                <TableCell>
+                                    <IssueForm/>
+                                </TableCell>
+                            </TableRow>
+                        </TableHead>
+                        <TableBody>{data.map(issue =>
+                            <TableRow key={"issue-" + issue.id}>
+                                <TableCell>{issue.id}</TableCell>
+                                <TableCell>{new Date(parseInt(issue.report_date) * 1000).toLocaleDateString()}</TableCell>
+                                <TableCell>
+                                    {
+                                        (issue.resolve_date > 0)
+                                            ? new Date(parseInt(issue.resolve_date) * 1000).toLocaleDateString()
+                                            : ''
+                                    }
+                                </TableCell>
+                                <TableCell>
+                                    <AddressList location={"/terms/15"} id={"address-" + issue.id} value={0}/>
+                                </TableCell>
+                                <TableCell>
+                                    <TextField
+                                        label="Комментарий"
+                                        id={"comment-" + issue.id}
+                                        defaultValue={issue.comment ? he.decode(issue.comment) : ''}
+                                        margin="normal"
+                                        variant="outlined"
+                                    /></TableCell>
+                                <TableCell>
+                                    <ButtonGroup size="small">
+                                        <Button type="button" onClick={this.handleSubmit} data-update={issue.id}
+                                                color="primary">
+                                            UPDATE
+                                        </Button>
+                                        <Button type="button" onClick={this.handleSubmit} data-resolve={issue.id}
+                                                color="secondary">
+                                            RESOLVE
+                                        </Button>
+                                    </ButtonGroup>
+                                </TableCell>
+                            </TableRow>
+                        )}
+                        </TableBody>
+                    </Table>
+                </Paper>
             );
         }
         return ('');
     }
 }
 
+const formStyles = makeStyles(theme => ({
+    modal: {
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    paper: {
+        backgroundColor: theme.palette.background.paper,
+        border: '2px solid #000',
+        boxShadow: theme.shadows[5],
+        padding: theme.spacing(2, 4, 3),
+    },
+}));
+
+function IssueForm() {
+
+    const classes = formStyles();
+    const [open, setOpen] = React.useState(false);
+
+    const handleClose = () => {
+        setOpen(false);
+    }
+
+    const handleOpen = () => {
+        setOpen(true);
+    }
+
+    const reportIssue = (event) => {
+        event.preventDefault();
+        console.log(event.target.comment_new.value);
+        let url = IspCpConfig.ApiRootRequest("/issues/report/?comment=" + event.target.comment_new.value);
+        axios.get(url).then(
+            result => {
+                handleClose();
+                issusesInstance.callUpdate();
+            }
+        );
+    }
+
+    return (
+        <div>
+            <Button onClick={handleOpen} color="secondary" variant={"outlined"}>REPORT</Button>
+            <Modal
+                aria-labelledby="transition-modal-title"
+                aria-describedby="transition-modal-description"
+                open={open}
+                closeAfterTransition
+                onClose={handleClose}
+                className={classes.modal}
+            >
+
+                <form className={classes.paper} onSubmit={reportIssue}>
+                    <h2 id="transition-modal-title">REPORT ISSUE</h2>
+                    <div>
+                        <AddressList location={"/terms/1"} id={"address-new"} value={0}/>
+                    </div>
+                    <div>
+                        <TextField
+                            label="Комментарий"
+                            id={"transition-modal-description"}
+                            defaultValue={""}
+                            margin="normal"
+                            variant="outlined"
+                            name={"comment_new"}
+                        />
+                        <Button type="submit" color="secondary" variant={"outlined"}>REPORT</Button>
+                    </div>
+                </form>
+            </Modal>
+        </div>
+    );
+
+};
+
 class AddressList extends React.Component {
+
+
 
     constructor(props) {
         super(props);
         this.state = {
-            term    : {},
-            children: []
+            address: {term:{id:0},children:[]},
+            houses: {term:{id:0},children:[]},
+            flats: {term:{id:0},children:[]},
+            selectedAddress:0,
+            selectedHouse:0,
+            selectedFlat:0
         };
         this.apiPath = IspCpConfig.ApiRootRequest("/terms/");
         this.location = props.location;
+        this.addrSelected = this.addrSelected.bind(this);
     }
 
     componentDidMount() {
@@ -182,10 +269,13 @@ class AddressList extends React.Component {
         axios.get(this.apiPath)
              .then(
                  result => {
-                     console.log(result);
                      this.setState({
-                         term    : result.data.term,
-                         children: result.data.children
+                         address: result.data,
+                         houses: {term:{id:0},children:[]},
+                         flats: {term:{id:0},children:[]},
+                         selectedAddress: result.data.term.id,
+                         selectedHouse:0,
+                         selectedFlat:0
                      });
                  }
              )
@@ -195,16 +285,106 @@ class AddressList extends React.Component {
         ;
     }
 
+    addrSelected = (event) => {
+        console.log(event.target.value);
+        var selectedId = event.target.value;
+        var apiPath = IspCpConfig.ApiRootRequest("/terms/" + selectedId);
+        axios.get(apiPath)
+             .then(
+                 result => {
+                     this.setState({
+                         address: this.state.address,
+                         houses: result.data,
+                         flats: {term:{id:0},children:[]},
+                         selectedAddress: selectedId,
+                         selectedHouse:0,
+                         selectedFlat:0
+                     });
+                     this.forceUpdate();
+                 }
+             )
+             .catch(reason => {
+                 console.log("Axios error: " + reason)
+             })
+        ;
+
+    }
+
+    houseSelected = (event) => {
+        console.log(event.target.value);
+        var selectedId = event.target.value;
+        var apiPath = IspCpConfig.ApiRootRequest("/terms/" + selectedId);
+        axios.get(apiPath)
+             .then(
+                 result => {
+                     this.setState({
+                         address: this.state.address,
+                         houses: this.state.houses,
+                         flats: result.data,
+                         selectedAddress: this.state.selectedAddress,
+                         selectedHouse:selectedId,
+                         selectedFlat:0
+                     });
+                     this.forceUpdate();
+                 }
+             )
+             .catch(reason => {
+                 console.log("Axios error: " + reason)
+             })
+        ;
+
+    }
+
+    flatSelected = (event) => {
+        console.log(event.target.value);
+        var selectedId = event.target.value;
+        this.setState({
+            address: this.state.address,
+            houses: this.state.houses,
+            flats: this.state.flats,
+            selectedAddress: this.state.selectedAddress,
+            selectedHouse:this.state.selectedHouse,
+            selectedFlat:selectedId
+        });
+        this.forceUpdate();
+
+    }
+
     render() {
+        console.log(this.state);
         return (
+            <div>
             <NativeSelect
                 id={this.props.id}
-                value={this.props.value}
+                value={this.state.selectedAddress}
+                onChange={this.addrSelected}
             >
-                {this.state.children.map(child =>
+                <option value={0}>Улица</option>
+                {this.state.address.children.map(child =>
                     <option key={child.id} value={child.id} data-slug={slugify(child.title)}>{child.title}</option>
                 )}
             </NativeSelect>
+                <NativeSelect
+                    id={this.props.id + "-houses"}
+                    value={this.state.selectedHouse}
+                    onChange={this.houseSelected}
+                >
+                    <option value={0}>Дом</option>
+                    {this.state.houses.children.map(child =>
+                        <option key={child.id} value={child.id} data-slug={slugify(child.title)}>{child.title}</option>
+                    )}
+                </NativeSelect>
+                <NativeSelect
+                    id={this.props.id + "flats"}
+                    value={this.state.selectedFlat}
+                    onChange={this.flatSelected}
+                >
+                    <option value={0}>Квартира</option>
+                    {this.state.flats.children.map(child =>
+                        <option key={child.id} value={child.id} data-slug={slugify(child.title)}>{child.title}</option>
+                    )}
+                </NativeSelect>
+            </div>
         );
     }
 }

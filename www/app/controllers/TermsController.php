@@ -51,6 +51,41 @@ class TermsController extends ControllerBase
         $this->response->setContent($content)->send();
     }
 
+    public function item($id)
+    {
+        /**
+         * Locals
+         */
+
+        $term           = new Term();
+        $term->id       = 0;
+        $term->slug     = "root";
+        $term->title    = "root";
+        $term->parentId = 0;
+        $response = ["success"=>false, "term"=>$term];
+
+        /**
+         * Externals
+         */
+        $slug = $this->filter->sanitize($id, "absint");
+
+        /**
+         * Gathering data
+         */
+        $term = Term::findFirst($id);
+
+        if ($term) {
+            $response["success"] = true;
+            $response["term"]    = $term;
+        }
+
+        /**
+         * Building response.
+         */
+        $content = json_encode($response);
+        $this->response->setContent($content)->send();
+    }
+
     public function create()
     {
         /**
