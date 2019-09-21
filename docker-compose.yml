@@ -28,7 +28,7 @@ services:
     image: nginx:latest
     volumes:
       - ./www:/var/www/html
-      - ./config/nginx/0-phcrm.conf:/etc/nginx/conf.d/0-phcrm.conf
+      - ./config/nginx/0-${PROJECT_ENV}.${PROJECT_NAME}.conf:/etc/nginx/conf.d/0-${PROJECT_ENV}.${PROJECT_NAME}.conf
     ports:
       - "8080:80"
   mariadb:

@@ -1,6 +1,9 @@
 <?php
 
-class Term extends \Phalcon\Mvc\Model
+use Phalcon\Mvc\Model;
+use Phalcon\Mvc\ResultsetInterface;
+
+class Term extends Model
 {
 
     /**
@@ -32,7 +35,7 @@ class Term extends \Phalcon\Mvc\Model
      */
     public function initialize()
     {
-        $this->setSchema("admin_service_db");
+        $this->setSchema($_ENV["project_database_name"]);
         $this->setSource("terms");
     }
 
@@ -41,7 +44,7 @@ class Term extends \Phalcon\Mvc\Model
      *
      * @return string
      */
-    public function getSource()
+    public function getSource():string
     {
         return 'terms';
     }
@@ -52,7 +55,7 @@ class Term extends \Phalcon\Mvc\Model
      * @param mixed $parameters
      * @return Term[]|Term|\Phalcon\Mvc\Model\ResultSetInterface
      */
-    public static function find($parameters = null)
+    public static function find($parameters = null): ResultsetInterface
     {
         return parent::find($parameters);
     }

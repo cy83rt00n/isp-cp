@@ -1,12 +1,14 @@
 #!/bin/bash
 set -eo pipefail
 
+. "$(pwd)/.env"
+
 case $1 in
 dbdump)
-  docker-compose exec mariadb mysqldump -uroot -psecret -B admin_service_db | gzip -c >./database/mysql/0-latest.sql.gz
+  docker-compose exec mariadb mysqldump -uroot -psecret -B ${DB_NAME} | gzip -c >./database/mysql/0-latest.sql.gz
   ;;
 db)
-  docker-compose exec mariadb mysql -uroot -psecret admin_service_db
+  docker-compose exec mariadb mysql -uroot -psecret ${DB_NAME}
   ;;
 yarn)
   docker-compose exec react yarn $2 $3
@@ -17,7 +19,7 @@ install)
 dc-start)
   docker-compose up -d
   ;;
-dc-down)
+dc-stop)
   docker-compose down -v
   ;;
 dc-restart)
@@ -28,12 +30,12 @@ full-restart)
   ;;
 ahost-add)
   ip=${2:-127.0.0.1}
-  domain=${3:-$(basename $(pwd)).loc}
-  project=${4:-$(basename $(pwd))}
+  domain=${3:-${PROJECT_DOMAIN}}
+  project=${4:-${PROJECT_NAME}}
   echo "${ip}	${domain}	#${project} ahost-auto-assigned-value" >>/etc/hosts
   ;;
 ahost-del)
-  project=${2:-$(pwd).loc}
+  project=${2:-${PROJECT_NAME}}
   sed -i "/#${project}/d" /etc/hosts
   ;;
 ahost-dal)

@@ -1,7 +1,6 @@
 <?php
 
 use Phalcon\Mvc\Model;
-use Phalcon\Mvc\Model\ResultInterface;
 use Phalcon\Mvc\Model\ResultSetInterface;
 
 class Issue extends Model
@@ -49,7 +48,7 @@ class Issue extends Model
      * @param mixed $parameters
      * @return Issue[]|Issue|ResultSetInterface
      */
-    public static function find($parameters = null)
+    public static function find($parameters = null): \Phalcon\Mvc\ResultsetInterface
     {
         return parent::find($parameters);
     }
@@ -70,7 +69,7 @@ class Issue extends Model
      */
     public function initialize()
     {
-        $this->setSchema("admin_service_db");
+        $this->setSchema($_ENV["project_database_name"]);
         $this->setSource("issues");
     }
 
@@ -79,7 +78,7 @@ class Issue extends Model
      *
      * @return string
      */
-    public function getSource()
+    public function getSource(): string
     {
         return 'issues';
     }

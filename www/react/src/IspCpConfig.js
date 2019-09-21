@@ -1,6 +1,6 @@
 class IspCpConfig {
     ApiProtocol = "http";
-    ApiHost = "isp-cp.loc";
+    ApiHost = "loc.onedext.ru";
     ApiPort = 8080;
     ApiUrlPrefix = "/api";
 
@@ -16,13 +16,13 @@ class IspCpConfig {
     }
 
     ApiRootRequest(path) {
-        if (path.indexOf("?") == -1) {
+        if (path.indexOf("?") === -1) {
             return this.ApiRequest(path + "?role=99999999999&passwd=secret")
         } else {
             return this.ApiRequest(path + "&role=99999999999&passwd=secret")
         }
     }
-};
+}
 
 class IspCpHelper {
     getUriParams() {
@@ -34,7 +34,7 @@ class IspCpHelper {
         });
         return pairs;
     }
-};
+}
 
 export default new IspCpConfig();
 
