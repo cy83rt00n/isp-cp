@@ -1,7 +1,6 @@
 <?php
 
 use Phalcon\Mvc\Model;
-use Phalcon\Mvc\ResultsetInterface;
 
 class User extends Model
 {
@@ -55,7 +54,7 @@ class User extends Model
      * @param mixed $parameters
      * @return User[]|User|\Phalcon\Mvc\Model\ResultSetInterface
      */
-    public static function find($parameters = null): ResultsetInterface
+    public static function find($parameters = null)
     {
         return parent::find($parameters);
     }

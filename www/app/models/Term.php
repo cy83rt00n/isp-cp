@@ -1,7 +1,6 @@
 <?php
 
 use Phalcon\Mvc\Model;
-use Phalcon\Mvc\ResultsetInterface;
 
 class Term extends Model
 {
@@ -55,7 +54,7 @@ class Term extends Model
      * @param mixed $parameters
      * @return Term[]|Term|\Phalcon\Mvc\Model\ResultSetInterface
      */
-    public static function find($parameters = null): ResultsetInterface
+    public static function find($parameters = null)
     {
         return parent::find($parameters);
     }
