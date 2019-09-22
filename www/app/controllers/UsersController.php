@@ -101,11 +101,29 @@ class UsersController extends ControllerBase
         $allowed = $this->isAllowed(__FUNCTION__);
 
         if ($allowed) {
-            $user = new User();
-            $user->login = $this->request->get("email", "email", "");
-            $user->password = $this->request->get("password", "string", "qwerty");
-            $user->roleId = AclHelper::roleId("CommonUser");
-            $success = $user->create();
+            /**
+             * Collecting request data
+             */
+            $email = $this->request->get("email", "email", "");
+            $password = $this->request->get("password", "string", "qwerty");
+            /**
+             * Is user exists
+             */
+            $user = User::find(["login=:email:", "bind"=>["email"=>$email]]);
+
+            $isUser = sizeof($user)>0;
+            /**
+             * If it is
+             */
+            if(!$isUser) {
+                $user = new User();
+                $user->login = $email;
+                $user->password = $password;
+                $user->roleId = AclHelper::roleId("CommonUser");
+                $success = $user->create();
+            } else {
+                $success = $user;
+            }
         }
 
         /**
@@ -123,6 +141,7 @@ class UsersController extends ControllerBase
 
     public function login()
     {
+
         /**
          * Locals
          */
@@ -149,6 +168,15 @@ class UsersController extends ControllerBase
         /**
          * Building response.
          */
+
+        if ($this->dispatcher->wasForwarded()) {
+
+            return [
+                "success" => boolval($user),
+                "item" => $user
+            ];
+        }
+
         $this->response->setContent(
             json_encode([
                 "success" => boolval($user),

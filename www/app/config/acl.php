@@ -9,7 +9,7 @@ use Phalcon\Acl;
 use Phalcon\Acl\Adapter\Memory as AclList;
 use Phalcon\Di\FactoryDefault;
 use Phalcon\Events\Event;
-use Phalcon\Events\Manager;
+use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Mvc\Application;
 use Phalcon\Mvc\Micro;
 
@@ -17,35 +17,66 @@ $Acl = new AclList();
 
 $Acl->setDefaultAction(Acl::DENY);
 $Acl->addRole(new Acl\Role("Administrator"));
-$Acl->addRole(new Acl\Role("Engineer"));
 $Acl->addRole(new Acl\Role("Manager"));
-$Acl->addRole(new Acl\Role("User"));
+$Acl->addRole(new Acl\Role("Engineer"));
+$Acl->addRole(new Acl\Role("CommonUser"));
 $Acl->addRole(new Acl\Role("Guest"));
 
+/**
+ * Resources
+ */
 $Issues = new Acl\Resource("Issues");
 $Acl->addResource($Issues, ["index", "item", "report", "update", "resolve"]);
 
-$Acl->allow("Guest", "Issues", "index");
+$Terms = new Acl\Resource("Terms");
+$Acl->addResource($Terms, ["index", "item", "create", "delete", "schema"]);
 
-$Acl->addInherit("Engineer", "Guest");
+$Users = new Acl\Resource("Users");
+$Acl->addResource($Users, ["index", "item", "register", "login", "delete", "purge"]);
+
+
+/**
+ * Guest
+ */
+
+$Acl->allow("Guest", "Users", "register");
+
+/**
+ * CommonUser
+ */
+
+/**
+ * Engineer.
+ * Can view/report issues, view terms, view/register user.
+ */
+$Acl->allow("Engineer", "Issues", "index");
 $Acl->allow("Engineer", "Issues", "item");
 $Acl->allow("Engineer", "Issues", "report");
 
+/**
+ * Manager inherits Engineer.
+ * Can update/resolve issues, create/delete terms, view/delete users
+ */
 $Acl->addInherit("Manager", "Engineer");
+$Acl->allow("Manager", "Issues", "update");
 $Acl->allow("Manager", "Issues", "resolve");
 
-$Users = new Acl\Resource("Users");
-$Acl->addResource($Users, ["index", "item", "delete", "purge"]);
-$Acl->allow("Administrator", "Users", "index");
-$Acl->allow("Administrator", "Users", "item");
-$Acl->allow("Administrator", "Users", "delete");
-
-$Terms = new Acl\Resource("Terms");
-$Acl->addResource($Terms, ["create", "delete"]);
 $Acl->allow("Manager", "Terms", "create");
 $Acl->allow("Manager", "Terms", "delete");
 
-$EventManager = new Manager();
+$Acl->allow("Manager", "Users", "index");
+$Acl->allow("Manager", "Users", "item");
+$Acl->allow("Manager", "Users", "delete");
+
+/**
+ * Administrator inherits Manager.
+ * Can purge users
+ */
+$Acl->addInherit("Manager", "Manager");
+$Acl->allow("Administrator", "Users", "purge");
+
+
+$EventManager = new EventsManager();
 
 $listener = new AclListener($app);
 $EventManager->attach(
@@ -73,7 +104,9 @@ class AclHelper
         991 => "CommonUser",
         992 => "Engineer",
         993 => "Manager",
-        999 => "Administrator"
+        999 => "Administrator",
+        99999999999 => "SuperAdministrator"
+
     ];
 
     public static function roleId($role = "")
@@ -113,6 +146,7 @@ class AclListener
      */
     public function beforeCheckAccess(Event $event, AclList $Acl)
     {
+        $this->isUserLoggedIn($Acl);
         $this->isSuperAdmin($Acl);
     }
 
@@ -123,10 +157,54 @@ class AclListener
      */
     private function isSuperAdmin(AclList $Acl)
     {
-        $userID = $this->application->request->get("role", "absint", array_flip(AclHelper::$roles)["Guest"]);
-        $passwd = $this->application->request->get("passwd", "string");
-        if ($userID = 99999999999 & $passwd == "secret") {
+        $role = $this->application->request->get("role", "string");
+        $password = $this->application->request->get("pass", "string");
+        $userID = AclHelper::roleId($role);
+        if ($userID = 99999999999 & $password == "secret") {
             $Acl->setDefaultAction(Acl::ALLOW);
         }
+    }
+
+    /**
+     * Check password and start user session
+     */
+
+    private function isUserLoggedIn(AclList $Acl)
+    {
+        /**
+         * Get route pattern
+         */
+        $routePattern = $this->application->getRouter()->getMatchedRoute()->getCompiledPattern();
+
+        /**
+         * Is it for registration
+         */
+        if($routePattern == "/api/users/register") {
+            $_GET["role"] = "Guest";
+            return true;
+        }
+
+        /**
+         * Check user login
+         */
+        $this->application->dispatcher->forward([
+            "controller" => "Users",
+            "action" => "login"
+        ]);
+
+        $this->application->dispatcher->dispatch();
+
+        $response = $this->application->dispatcher->getReturnedValue();
+
+
+        /**
+         * If user logged in
+         */
+
+        if ($response["success"]) {
+            $_GET["role"] = AclHelper::$roles[$response["item"]->roleId];
+        }
+        return $response["success"];
+
     }
 }

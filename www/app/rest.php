@@ -50,8 +50,12 @@ $app = new Micro();
 $app->response->setHeader("Access-Control-Allow-Origin", "*");
 $app->response->setContentType("application/json", "utf-8");
 
-include "config/acl.php";
-$di->setShared("acl", $Acl);
+/**
+ * For all the application actions in controllers have no suffixes.
+ * Because of C.R.U.D.
+ */
+$app->dispatcher->setActionSuffix('');
+
 
 $issues = new MicroCollection();
 $issues->setHandler("IssuesController", true);
@@ -95,5 +99,8 @@ $app->mount($options);
 $app->notFound(function () {
     echo json_encode(["success" => false, "error" => 404]);
 });
+
+include "config/acl.php";
+$di->setShared("acl", $Acl);
 
 $app->handle();

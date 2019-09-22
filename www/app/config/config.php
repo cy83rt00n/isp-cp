@@ -33,5 +33,10 @@ return new Config([
         // possibly if the web server rewrite rules are changed. This can also be set to a static path.
 //        'baseUri'        => preg_replace('/public([\/\\\\])index.php$/', '', $_SERVER["PHP_SELF"]),
         'baseUri' => '/'
+    ],
+    "session" => [
+        "uniqueId"   => "ispcp",
+        "lifetime"   => 3600,
+        "adapter"    => "files"
     ]
 ]);
