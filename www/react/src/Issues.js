@@ -65,7 +65,7 @@ export default class Issues extends React.Component {
     }
 
     resolveIssue(id) {
-        let url = IspCpConfig.ApiRootRequest("/issues/resolve/" + id);
+        let url = IspCpConfig.ApiRequest("/issues/resolve/" + id);
         axios.get(url).then(
             result => {
                 this.componentDidMount()
@@ -74,7 +74,7 @@ export default class Issues extends React.Component {
     }
 
     updateIssue(id, comment) {
-        let url = IspCpConfig.ApiRootRequest("/issues/update/" + id + "?comment=" + comment);
+        let url = IspCpConfig.ApiRequest("/issues/update/" + id + "?comment=" + comment);
         axios.get(url).then(
             result => {
                 this.componentDidMount()
@@ -84,10 +84,10 @@ export default class Issues extends React.Component {
 
 
     componentDidMount() {
-        let apiPath = IspCpConfig.ApiRootRequest("/issues/");
+        let apiPath = IspCpConfig.ApiRequest("/issues/");
         let location = this.props.location.pathname;
         if (location.startsWith("/issues/") && location.length > "/issues/".length) {
-            apiPath = IspCpConfig.ApiRootRequest(location);
+            apiPath = IspCpConfig.ApiRequest(location);
         }
 
         axios.get(apiPath)
@@ -197,7 +197,7 @@ function IssueForm() {
     const reportIssue = (event) => {
         event.preventDefault();
         console.log(event.target.comment_new.value);
-        let url = IspCpConfig.ApiRootRequest("/issues/report/?comment=" + event.target.comment_new.value);
+        let url = IspCpConfig.ApiRequest("/issues/report/?comment=" + event.target.comment_new.value);
         axios.get(url).then(
             result => {
                 handleClose();
@@ -255,7 +255,7 @@ class AddressList extends React.Component {
             selectedHouse:0,
             selectedFlat:0
         };
-        this.apiPath = IspCpConfig.ApiRootRequest("/terms/");
+        this.apiPath = IspCpConfig.ApiRequest("/terms/");
         this.location = props.location;
         this.addrSelected = this.addrSelected.bind(this);
     }
@@ -263,7 +263,7 @@ class AddressList extends React.Component {
     componentDidMount() {
 
         if (this.location.startsWith("/terms/") && this.location.length > "/terms/".length) {
-            this.apiPath = IspCpConfig.ApiRootRequest(this.location);
+            this.apiPath = IspCpConfig.ApiRequest(this.location);
         }
 
         axios.get(this.apiPath)
@@ -288,7 +288,7 @@ class AddressList extends React.Component {
     addrSelected = (event) => {
         console.log(event.target.value);
         var selectedId = event.target.value;
-        var apiPath = IspCpConfig.ApiRootRequest("/terms/" + selectedId);
+        var apiPath = IspCpConfig.ApiRequest("/terms/" + selectedId);
         axios.get(apiPath)
              .then(
                  result => {
@@ -313,7 +313,7 @@ class AddressList extends React.Component {
     houseSelected = (event) => {
         console.log(event.target.value);
         var selectedId = event.target.value;
-        var apiPath = IspCpConfig.ApiRootRequest("/terms/" + selectedId);
+        var apiPath = IspCpConfig.ApiRequest("/terms/" + selectedId);
         axios.get(apiPath)
              .then(
                  result => {
@@ -397,14 +397,14 @@ class HousesList extends React.Component {
             term    : {},
             children: []
         };
-        this.apiPath = IspCpConfig.ApiRootRequest("/terms/");
+        this.apiPath = IspCpConfig.ApiRequest("/terms/");
         this.location = props.location;
     }
 
     componentDidMount() {
 
         if (this.location.startsWith("/terms/") && this.location.length > "/terms/".length) {
-            this.apiPath = IspCpConfig.ApiRootRequest(this.location);
+            this.apiPath = IspCpConfig.ApiRequest(this.location);
         }
 
         axios.get(this.apiPath)
@@ -445,14 +445,14 @@ class ApartmentsList extends React.Component {
             term    : {},
             children: []
         };
-        this.apiPath = IspCpConfig.ApiRootRequest("/terms/");
+        this.apiPath = IspCpConfig.ApiRequest("/terms/");
         this.location = props.location;
     }
 
     componentDidMount() {
 
         if (this.location.startsWith("/terms/") && this.location.length > "/terms/".length) {
-            this.apiPath = IspCpConfig.ApiRootRequest(this.location);
+            this.apiPath = IspCpConfig.ApiRequest(this.location);
         }
 
         axios.get(this.apiPath)

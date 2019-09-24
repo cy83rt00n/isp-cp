@@ -14,7 +14,7 @@ export default class Options extends React.Component {
     }
 
     componentDidMount() {
-        axios.get(IspCpConfig.ApiRootRequest("/options/get/roles"))
+        axios.get(IspCpConfig.ApiRequest("/options/get/roles"))
             .then(
                 (result) => {
                     console.log(this.state);

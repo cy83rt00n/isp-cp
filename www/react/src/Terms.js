@@ -39,7 +39,7 @@ export default class Terms extends React.Component {
     }
 
     createTerm(slug, title, parent) {
-        let url = IspCpConfig.ApiRootRequest(
+        let url = IspCpConfig.ApiRequest(
             "/terms/create/" +
             "?slug=" + slug +
             "&title=" + title +
@@ -52,7 +52,7 @@ export default class Terms extends React.Component {
     }
 
     deleteTerm(id) {
-        let url = IspCpConfig.ApiRootRequest("/terms/delete/" + id);
+        let url = IspCpConfig.ApiRequest("/terms/delete/" + id);
         axios.get(url).then(
             result => {
                 this.componentDidMount();
@@ -83,10 +83,10 @@ export default class Terms extends React.Component {
 
 
     componentDidMount() {
-        let apiPath = IspCpConfig.ApiRootRequest("/terms/");
+        let apiPath = IspCpConfig.ApiRequest("/terms/");
         let location = this.props.location.pathname;
         if (location.startsWith("/terms/") && location.length > "/terms/".length) {
-            apiPath = IspCpConfig.ApiRootRequest(location);
+            apiPath = IspCpConfig.ApiRequest(location);
         }
 
         axios.get(apiPath)

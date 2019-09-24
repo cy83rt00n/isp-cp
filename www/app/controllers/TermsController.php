@@ -22,26 +22,33 @@ class TermsController extends ControllerBase
         $slug = $this->filter->sanitize($parentId, "absint");
 
         /**
+         * Checking access
+         */
+        $allowed = $this->isAllowed(__FUNCTION__);
+
+        /**
          * Gathering data
          */
-        $children = Term::find([
-            "parentId=:parentId:",
-            "bind" => [
-                "parentId" => $parentId
-            ]
-        ]);
+        if($allowed) {
+            $children = Term::find([
+                "parentId=:parentId:",
+                "bind" => [
+                    "parentId" => $parentId
+                ]
+            ]);
 
-        foreach ($children as $child) {
-            $response["children"][] = $child;
-        }
+            foreach ($children as $child) {
+                $response["children"][] = $child;
+            }
 
-        if ($slug !== 0) {
-            $term = Term::findFirst($parentId);
-        }
+            if ($slug !== 0) {
+                $term = Term::findFirst($parentId);
+            }
 
-        if ($term) {
-            $response["success"] = true;
-            $response["term"]    = $term;
+            if ($term) {
+                $response["success"] = true;
+                $response["term"]    = $term;
+            }
         }
 
         /**
@@ -70,13 +77,20 @@ class TermsController extends ControllerBase
         $slug = $this->filter->sanitize($id, "absint");
 
         /**
+         * Checking access
+         */
+        $allowed = $this->isAllowed(__FUNCTION__);
+
+        /**
          * Gathering data
          */
-        $term = Term::findFirst($id);
+        if($allowed) {
+            $term = Term::findFirst($id);
 
-        if ($term) {
-            $response["success"] = true;
-            $response["term"]    = $term;
+            if ($term) {
+                $response["success"] = true;
+                $response["term"]    = $term;
+            }
         }
 
         /**
