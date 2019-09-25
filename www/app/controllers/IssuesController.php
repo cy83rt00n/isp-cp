@@ -19,6 +19,7 @@ class IssuesController extends ControllerBase
          */
         $allowed = $this->isAllowed(__FUNCTION__);
 
+
         /**
          * Granting access
          */

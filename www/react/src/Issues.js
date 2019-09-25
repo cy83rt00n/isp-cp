@@ -66,7 +66,7 @@ export default class Issues extends React.Component {
 
     resolveIssue(id) {
         let url = IspCpConfig.ApiRequest("/issues/resolve/" + id);
-        axios.get(url).then(
+        axios.get(url,).then(
             result => {
                 this.componentDidMount()
             }
@@ -90,7 +90,9 @@ export default class Issues extends React.Component {
             apiPath = IspCpConfig.ApiRequest(location);
         }
 
-        axios.get(apiPath)
+        axios.get(apiPath, {
+            params: axios.defaults.params
+        })
              .then(
                  result => {
                      this.setState({

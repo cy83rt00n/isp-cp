@@ -279,5 +279,53 @@ class UsersController extends ControllerBase
 
     }
 
+    public function role()
+    {
+        /**
+         * Locals
+         */
+        $success = false;
+
+        /**
+         * Externals
+         */
+        $login = $this->request->get("email", "email", "");
+        $role = $this->request->get("curRole", "string", 0);
+        $newRole = $this->request->get("newRole", "string", 0);
+
+        /**
+         * Checking access
+         */
+        $allowed = $this->isAllowed(__FUNCTION__);
+
+        /**
+         * Finding User
+         */
+        if ($allowed) {
+            $user = User::findFirst([
+                "login=:login: AND roleId=:roleId:",
+                "bind" => [
+                    "login" => $login,
+                    "roleId" => AclHelper::roleId($role)
+                ]
+            ]);
+            if ($user) {
+                $user->roleId = AclHelper::roleId($newRole);
+                $success = $user->update();
+            }
+        }
+
+        /**
+         * Building response.
+         */
+        $this->response->setContent(
+            json_encode([
+                "success" => $success
+            ])
+        )
+            ->send();
+
+    }
+
 }
 

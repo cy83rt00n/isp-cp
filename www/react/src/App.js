@@ -5,21 +5,15 @@ import Issues from "./Issues";
 import Options from "./Options";
 import Terms from "./Terms";
 import Button from "@material-ui/core/Button";
-import SignIn from "./SignIn";
-import {IspCpConfig} from "./IspCpConfig";
-import {makeStyles as makeSignInStyles, makeStyles} from '@material-ui/core/styles';
+import {makeStyles} from '@material-ui/core/styles';
 import Container from "@material-ui/core/Container";
-import CssBaseline from "@material-ui/core/CssBaseline";
-import Avatar from "@material-ui/core/Avatar";
-import LockOutlinedIcon from "@material-ui/core/SvgIcon/SvgIcon";
-import Typography from "@material-ui/core/Typography";
 import TextField from "@material-ui/core/TextField";
-import FormControlLabel from "@material-ui/core/FormControlLabel";
-import Checkbox from "@material-ui/core/Checkbox";
-import Grid from "@material-ui/core/Grid";
-import Box from "@material-ui/core/Box";
+import {Box} from "@material-ui/core";
+import User from "./models/User";
+import {IspCpConfig} from "./IspCpConfig";
+import axios from "axios";
 
-const useStyles = makeSignInStyles(theme => ({
+const useStyles = makeStyles(theme => ({
     '@global': {
         body: {
             backgroundColor: theme.palette.common.white,
@@ -44,88 +38,71 @@ const useStyles = makeSignInStyles(theme => ({
     },
 }));
 
+class IspPanel extends React.Component {
 
-export default function IspPanel(props) {
-    const classes = useStyles();
-    if(IspCpConfig.LoggedIn) {
-        return <IspPanelPanel/>;
-    } else {
-
-        return (
-            <Container component="main" maxWidth="xs">
-                <CssBaseline />
-                <div className={classes.paper}>
-                    <Avatar className={classes.avatar}>
-                        <LockOutlinedIcon />
-                    </Avatar>
-                    <Typography component="h1" variant="h5">
-                        Sign in
-                    </Typography>
-                    <form className={classes.form} noValidate>
-                        <TextField
-                            variant="outlined"
-                            margin="normal"
-                            required
-                            fullWidth
-                            id="email"
-                            label="Email Address"
-                            name="email"
-                            autoComplete="email"
-                            autoFocus
-                        />
-                        <TextField
-                            variant="outlined"
-                            margin="normal"
-                            required
-                            fullWidth
-                            name="password"
-                            label="Password"
-                            type="password"
-                            id="password"
-                            autoComplete="current-password"
-                        />
-                        <FormControlLabel
-                            control={<Checkbox value="remember" color="primary" />}
-                            label="Remember me"
-                        />
-                        <Button
-                            type="submit"
-                            fullWidth
-                            variant="contained"
-                            color="primary"
-                            className={classes.submit}
-                        >
-                            Sign In
-                        </Button>
-                        <Grid container>
-                            <Grid item xs>
-                                <Link href="#" variant="body2">
-                                    Forgot password?
-                                </Link>
-                            </Grid>
-                            <Grid item>
-                                <Link href="#" variant="body2">
-                                    {"Don't have an account? Sign Up"}
-                                </Link>
-                            </Grid>
-                        </Grid>
-                    </form>
-                </div>
-                <Box mt={8}>
-                </Box>
-            </Container>
-        );
+    constructor(props) {
+        super(props);
+        const user = User;
+        this.state = {
+            user: user
+        }
+        this.handleSubmitLoginForm = this.handleSubmitLoginForm.bind(this);
     }
+
+    handleSubmitLoginForm(event) {
+        event.preventDefault();
+        const form = event.currentTarget;
+        const user = User;
+        user.email = form.email.value;
+        user.pass = form.pass.value;
+
+        axios.get(IspCpConfig.ApiRequest("/users/login"), {
+            params: {email: user.email, password: user.pass}
+        }).then(response => {
+            user.id = response.data.item.id || undefined;
+            this.setState({
+                user: user
+            });
+        });
+    }
+
+    render() {
+        const email = this.state.user.email;
+        const pass = this.state.user.pass;
+        const id = this.state.user.id || undefined;
+        if (parseInt(id) > 0) {
+            axios.defaults.params = {
+                email: email,
+                password: pass
+            };
+            return (<IspControl/>);
+        }
+        return (<LoginForm onSubmit={this.handleSubmitLoginForm} email={email} pass={pass}/>);
+    }
+
 }
 
-function LoginForm() {
-    return(
-        <SignIn/>
+export default IspPanel;
+
+function LoginForm(props) {
+    return (
+        <Container maxWidth={"md"}>
+            <form onSubmit={props.onSubmit}>
+                <Box>
+                    <TextField type={"email"} name={"email"} placeholder={"Login"} defaultValue={props.email}/>
+                </Box>
+                <Box>
+                    <TextField type={"password"} name={"pass"} placeholder={"Password"} defaultValue={props.pass}>
+                        Password
+                    </TextField>
+                </Box>
+                <Button type={"submit"}>SGIN IN</Button>
+            </form>
+        </Container>
     )
 }
 
-function IspPanelPanel()
-{
+function IspControl() {
     return (
         <Router>
             <div>

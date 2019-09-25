@@ -25,7 +25,7 @@ dc-stop)
 dc-restart)
   docker-compose down -v && docker-compose up -d
   ;;
-full-restart)
+dc-full-restart)
   docker-compose down --rmi all -v --remove-orphans && docker-compose up -d --build
   ;;
 ahost-add)
@@ -45,12 +45,15 @@ ahost-dal)
   echo "
 Project control script.
 Usage:
-  ./pcon dbdump       - creates project database dump from mariadb service container in ./database/mysql/0-latest.sql.gz
-  ./pcon db           - login into database service contaienr with uroot
-  ./pcon yarn \$2 \$3 - launch yarn inside react service container with two optional parameters
-  ./pcon install      - runs installation task from phalcon cli script
-  ./pcon dc-(start|down|restart)  - starts,stops,restarts containers
-  ./pcon dc-full-restart          - restarting containers with removing images,volumes on stop and build on start
+  ./pcon dbdump                       - creates project database dump from mariadb service container in ./database/mysql/0-latest.sql.gz
+  ./pcon db                           - login into database service contaienr with uroot
+  ./pcon yarn \$2 \$3                 - launch yarn inside react service container with two optional parameters
+  ./pcon install                      - runs installation task from phalcon cli script
+  ./pcon dc-(start|down|restart)      - starts,stops,restarts containers
+  ./pcon dc-full-restart              - restarting containers with removing images,volumes on stop and build on start
+  ./pcon ahost-add ip domain project  - generates record in /etc/hosts as \"ip domain #project ahost-auto-assigned-value\"
+  ./pcon ahost-del project            - deletes records from /etc/hosts where project match \"ip domain #project ahost-auto-assigned-value\"
+  ./pcon ahost-dal                    - deletes all \" .* ahost-auto-assigned-value\" records
 "
   ;;
 esac
