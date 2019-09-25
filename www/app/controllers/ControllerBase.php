@@ -10,13 +10,12 @@ class ControllerBase extends Controller
          * Externals
          */
         $className = str_replace("Controller", '', get_class($this));
-        $roleID = $this->request->get("role", "absint", array_flip(AclHelper::$roles)["Guest"]);
         $Acl = $this->getDI()->getAcl();
 
         /**
          * Cheking permission for role
          */
-        return $Acl->isAllowed(AclHelper::$roles[$roleID], $className, $name);
+        return $Acl->isAllowed(AclHelper::currentUserRole($this->di), $className, $name);
     }
 
     protected function currentUserId()

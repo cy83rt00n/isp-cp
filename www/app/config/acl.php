@@ -72,7 +72,7 @@ $Acl->allow("Manager", "Users", "delete");
  * Administrator inherits Manager.
  * Can purge users
  */
-$Acl->addInherit("Manager", "Manager");
+$Acl->addInherit("Administrator", "Manager");
 $Acl->allow("Administrator", "Users", "purge");
 
 
@@ -117,6 +117,48 @@ class AclHelper
         return array_flip(self::$roles)["Guest"];
     }
 
+    public static function currentUserRole($app)
+    {
+        /**
+         * Get route pattern
+         */
+        $app->get('router')->handle();
+
+        $routePattern = $app->getRouter()->getMatchedRoute()->getCompiledPattern();
+
+        /**
+         * Is it for registration
+         */
+        if ($routePattern == "/api/users/register") {
+            $_GET["role"] = "Guest";
+            return true;
+        }
+
+        /**
+         * Check user login
+         */
+        $app->get('dispatcher')->forward([
+            "controller" => "Users",
+            "action" => "login"
+        ]);
+        $app->get('dispatcher')->setActionSuffix('');
+        $app->get('dispatcher')->dispatch();
+
+        $response = $app->get('dispatcher')->getReturnedValue();
+
+
+        /**
+         * If user logged in
+         */
+
+        if ($response["success"]) {
+            $_GET["role"] = AclHelper::$roles[$response["item"]->roleId];
+            $_GET["userId"] = $response["item"]->id;
+            return self::$roles[$response["item"]->roleId];
+        }
+        return "Guest";
+    }
+
 }
 
 /**
@@ -146,7 +188,7 @@ class AclListener
      */
     public function beforeCheckAccess(Event $event, AclList $Acl)
     {
-        $this->isUserLoggedIn($Acl);
+//        AclHelper::currentUserRole($this->application->di);
         $this->isSuperAdmin($Acl);
     }
 
@@ -160,51 +202,9 @@ class AclListener
         $role = $this->application->request->get("role", "string");
         $password = $this->application->request->get("pass", "string");
         $userID = AclHelper::roleId($role);
-        if ($userID = 99999999999 & $password == "secret") {
+        if ($userID == 99999999999 && $password == "secret") {
             $Acl->setDefaultAction(Acl::ALLOW);
         }
     }
 
-    /**
-     * Check password and start user session
-     */
-
-    private function isUserLoggedIn(AclList $Acl)
-    {
-        /**
-         * Get route pattern
-         */
-        $routePattern = $this->application->getRouter()->getMatchedRoute()->getCompiledPattern();
-
-        /**
-         * Is it for registration
-         */
-        if($routePattern == "/api/users/register") {
-            $_GET["role"] = "Guest";
-            return true;
-        }
-
-        /**
-         * Check user login
-         */
-        $this->application->dispatcher->forward([
-            "controller" => "Users",
-            "action" => "login"
-        ]);
-
-        $this->application->dispatcher->dispatch();
-
-        $response = $this->application->dispatcher->getReturnedValue();
-
-
-        /**
-         * If user logged in
-         */
-
-        if ($response["success"]) {
-            $_GET["role"] = AclHelper::$roles[$response["item"]->roleId];
-        }
-        return $response["success"];
-
-    }
 }

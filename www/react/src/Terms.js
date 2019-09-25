@@ -89,7 +89,9 @@ export default class Terms extends React.Component {
             apiPath = IspCpConfig.ApiRequest(location);
         }
 
-        axios.get(apiPath)
+        axios.get(apiPath, {
+            params: axios.defaults.params
+        })
             .then(
                 result => {
                     console.log(result);

@@ -74,6 +74,7 @@ $users->get("/users", "index");
 $users->get("/users/{id}", "item");
 $users->get("/users/register", "register");
 $users->get("/users/login", "login");
+$users->get("/users/role", "role");
 $users->get("/users/delete", "delete");
 $users->get("/users/purge", "purge");
 $app->mount($users);
