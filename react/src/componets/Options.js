@@ -1,6 +1,6 @@
 import React from "react";
 import axios from "axios"
-import IspCpConfig from "./IspCpConfig";
+import IspCpConfig from "../IspCpConfig";
 
 export default class Options extends React.Component {
     state = {

@@ -1,7 +1,7 @@
 import React from 'react';
 import {BrowserRouter as Router, Link as RLink, Route} from "react-router-dom";
 import axios from 'axios';
-import IspCpConfig from "./IspCpConfig";
+import IspCpConfig from "../IspCpConfig";
 import {slugify} from 'transliteration';
 import {
     Box,
@@ -13,10 +13,13 @@ import {
     List,
     ListItem,
     NativeSelect,
-    TextField
+    TextField,
+    Grid,
+    Paper,
+    makeStyles
 } from "@material-ui/core";
 
-import Term from "./models/Term";
+import Term from "../models/Term";
 
 var he = require('he');
 
@@ -29,31 +32,42 @@ export default class Terms extends React.Component {
         this.state = {
             success: false,
             term: {},
-            children: {},
+            children: [],
             create: Term
         };
         this.updateTimeout = 10000;
         this.onSubmit = this.onSubmit.bind(this);
         this.componentDidMount = this.componentDidMount.bind(this);
         this.onParentSelect = this.onParentSelect.bind(this);
+        this.setInitialState = this.setInitialState.bind(this);
+        this.setInitialState();
     }
 
     createTerm(slug, title, parent) {
-        let url = IspCpConfig.ApiRequest(
-            "/terms/create/" +
-            "?slug=" + slug +
-            "&title=" + title +
-            "&parent=" + parent
-        );
-        axios.get(url).then(
+        let url = IspCpConfig.ApiRequest("/terms/create/");
+        axios.get(url,{
+            params: {
+                email: axios.defaults.params.email,
+                password: axios.defaults.params.password,
+                slug: slug,
+                title: title,
+                parent: parent
+            }
+        }).then(
             result => {
                 this.componentDidMount();
             })
     }
 
     deleteTerm(id) {
-        let url = IspCpConfig.ApiRequest("/terms/delete/" + id);
-        axios.get(url).then(
+        let url = IspCpConfig.ApiRequest("/terms/delete/");
+        axios.get(url,{
+            params: {
+                email: axios.defaults.params.email,
+                    password: axios.defaults.params.password,
+                    id: id
+            }
+        }).then(
             result => {
                 this.componentDidMount();
             })
@@ -61,6 +75,9 @@ export default class Terms extends React.Component {
 
     onSubmit(event) {
         event.preventDefault();
+        console.log(event.target);
+        const Target = event.target;
+        const CurTarget = event.currentTarget;
         if (event.target.create)
             this.createTerm(event.target.slug.value, event.target.title.value, event.target.parent.value);
         if (event.currentTarget.dataset.delete)
@@ -90,7 +107,10 @@ export default class Terms extends React.Component {
         }
 
         axios.get(apiPath, {
-            params: axios.defaults.params
+            params: {
+                email: axios.defaults.params.email,
+                password: axios.defaults.params.password
+            }
         })
             .then(
                 result => {
@@ -99,13 +119,16 @@ export default class Terms extends React.Component {
                         success: result.data.success,
                         term: result.data.term,
                         children: result.data.children,
-                        create: new Term({parentId: result.data.term.id, slug: slugify(result.data.term.title)})
+                        create: Term
                     });
                 }
             )
             .catch(reason => {
                 console.log(reason)
             })
+    }
+
+    setInitialState() {
     }
 
     componentDidUpdate(prevProps) {
@@ -141,8 +164,21 @@ export default class Terms extends React.Component {
                     />
                 </div>
             );
+        } else {
+            return (
+                <div>
+                    <TermsForm
+                        term={this.state.term}
+                        slug={this.state.create.slug}
+                        parentId={this.state.create.parentId}
+                        title={this.state.create.title}
+                        children={this.state.children}
+                        onSubmit={this.onSubmit}
+                        onChange={this.onParentSelect}
+                    />
+                </div>
+            );
         }
-        return ('');
     }
 }
 
@@ -156,43 +192,70 @@ function TermsListItem(props) {
     );
 }
 
+const useStyles = makeStyles(theme => ({
+    root: {
+        flexGrow: 1,
+    },
+    paper: {
+        height: 140,
+        width: 100,
+    },
+    control: {
+        padding: theme.spacing(2),
+    },
+}));
+
 function TermsForm(props) {
     const term = props.term || {id: false};
     const children = props.children || [];
+    const classes = useStyles();
 
     return (
-        <form onSubmit={props.onSubmit}>
+       <Box component={"form"} onSubmit={props.onSubmit} variant={"outlined"}>
+
+            <Grid container justify="flex-start" spacing={4}>
+                <Grid key={0} item>
+                    <TextField
+                    label={"Название"}
+                    name={"title"}
+                    defaultValue={''}
+                    variant={"standard"}
+                >
+                </TextField>
+                </Grid>
+                <Grid key={1} item>
+                    <FormControl>
+                        <InputLabel shrink htmlFor="parent-id-select">
+                            Родитель
+                        </InputLabel>
+                        <NativeSelect
+                            onChange={props.onChange}
+                            inputProps={{
+                                name: 'parent',
+                                id: 'parent-id-select',
+                            }}
+                            value={props.parentId}
+                        >
+                            <option key={0} value={0} data-slug={"root"}>Корень</option>
+                            {term.id && <option key={term.id} value={term.id}>{term.title}</option>}
+                            {children.map(child =>
+                                <option key={child.id} value={child.id} data-slug={slugify(child.title)}>{child.title}</option>
+                            )}
+                        </NativeSelect>
+                    </FormControl>
+                </Grid>
+                <Grid key={2} item>
+                    <Button data-create={0} type={"submit"} variant={"outlined"} color={"primary"}
+                            size={"large"}>SUBMIT</Button>
+                </Grid>
+            </Grid>
+
             <Input type={"hidden"} name={"create"} value={0}/>
             <Input type={"hidden"} name={"slug"} value={props.slug}/>
-            <TextField
-                label={"Название"}
-                name={"title"}
-                defaultValue={''}
-                variant={"standard"}
-            >
-            </TextField>
-            <FormControl>
-                <InputLabel shrink htmlFor="parent-id-select">
-                    Родитель
-                </InputLabel>
-                <NativeSelect
-                    onChange={props.onChange}
-                    inputProps={{
-                        name: 'parent',
-                        id: 'parent-id-select',
-                    }}
-                    value={props.parentId}
-                >
-                    <option key={0} value={0} data-slug={"root"}>Корень</option>
-                    {term.id && <option key={term.id} value={term.id}>{term.title}</option>}
-                    {children.map(child =>
-                        <option key={child.id} value={child.id} data-slug={slugify(child.title)}>{child.title}</option>
-                    )}
-                </NativeSelect>
-            </FormControl>
-            <Button data-create={0} type={"submit"} variant={"outlined"} color={"primary"}
-                    size={"large"}>SUBMIT</Button>
-        </form>
+
+
+
+       </Box>
     );
 }
 

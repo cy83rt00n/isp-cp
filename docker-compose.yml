@@ -9,18 +9,18 @@ services:
 # It can be useful in future
 #    image: phalconphp/php-fpm
     volumes:
-      - ./www:/var/www/html
+      - ./phalcon:/var/www/html
     environment:
       project_database_name: ${DB_NAME}
   react:
     container_name: "${PROJECT_NAME}_react"
-    command: ["serve", "-s", "build", "-l", "3000"]
+#    command: ["serve", "-s", "build", "-l", "3000"]
     build:
       context: .
       dockerfile: dockerfiles/react.dockerfile
     working_dir: /app
     volumes:
-      - ./www/react:/app
+      - ./react:/app
     ports:
       - "80:3000"
       - "35729:35729"
@@ -28,7 +28,7 @@ services:
     container_name: "${PROJECT_NAME}_www"
     image: nginx:latest
     volumes:
-      - ./www:/var/www/html
+      - ./phalcon/public:/var/www/html
       - ./config/nginx/0-${PROJECT_ENV}.${PROJECT_NAME}.conf:/etc/nginx/conf.d/0-${PROJECT_ENV}.${PROJECT_NAME}.conf
     ports:
       - "8080:80"
