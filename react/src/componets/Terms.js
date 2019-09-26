@@ -1,5 +1,4 @@
 import React from 'react';
-import {BrowserRouter as Router, Link as RLink, Route} from "react-router-dom";
 import axios from 'axios';
 import IspCpConfig from "../IspCpConfig";
 import {slugify} from 'transliteration';
@@ -7,19 +6,17 @@ import {
     Box,
     Button,
     FormControl,
+    Grid,
     Input,
     InputLabel,
-    Link,
     List,
-    ListItem,
+    makeStyles,
     NativeSelect,
-    TextField,
-    Grid,
-    Paper,
-    makeStyles
+    TextField
 } from "@material-ui/core";
 
 import Term from "../models/Term";
+import TermsListItem from "./TermsListItem";
 
 var he = require('he');
 
@@ -29,12 +26,13 @@ export default class Terms extends React.Component {
 
     constructor(props) {
         super(props);
+        console.log("I'm constructor");
         this.state = {
             success: false,
-            term: {},
-            children: [],
-            create: Term
+            terms  : [new Term({})],
+            create : new Term({})
         };
+        console.log("My state is " + JSON.stringify(this.state));
         this.updateTimeout = 10000;
         this.onSubmit = this.onSubmit.bind(this);
         this.componentDidMount = this.componentDidMount.bind(this);
@@ -43,29 +41,32 @@ export default class Terms extends React.Component {
         this.setInitialState();
     }
 
-    createTerm(slug, title, parent) {
+    createTerm(eventTarget) {
         let url = IspCpConfig.ApiRequest("/terms/create/");
-        axios.get(url,{
+        axios.get(url, {
             params: {
-                email: axios.defaults.params.email,
+                email   : axios.defaults.params.email,
                 password: axios.defaults.params.password,
-                slug: slug,
-                title: title,
-                parent: parent
+                slug    : eventTarget.slug.value,
+                title   : eventTarget.title.value,
+                parent  : eventTarget.parent.value
             }
         }).then(
             result => {
+                this.setState({
+                    create: new Term({})
+                });
                 this.componentDidMount();
             })
     }
 
     deleteTerm(id) {
         let url = IspCpConfig.ApiRequest("/terms/delete/");
-        axios.get(url,{
+        axios.get(url, {
             params: {
-                email: axios.defaults.params.email,
-                    password: axios.defaults.params.password,
-                    id: id
+                email   : axios.defaults.params.email,
+                password: axios.defaults.params.password,
+                id      : id
             }
         }).then(
             result => {
@@ -74,32 +75,31 @@ export default class Terms extends React.Component {
     }
 
     onSubmit(event) {
+        console.log(event.currentTarget.dataset.delete);
         event.preventDefault();
-        console.log(event.target);
-        const Target = event.target;
-        const CurTarget = event.currentTarget;
-        if (event.target.create)
-            this.createTerm(event.target.slug.value, event.target.title.value, event.target.parent.value);
-        if (event.currentTarget.dataset.delete)
+        if (event.target.create) {
+            this.createTerm(event.target);
+        }
+        if (event.currentTarget.dataset.delete) {
             this.deleteTerm(event.currentTarget.dataset.delete);
+        }
     }
 
     onParentSelect(event) {
 
+        console.log(event.target.value);
         this.setState({
-            create : new Term({
+            create: new Term({
                 parentId: event.target.value,
-                slug:event.target.selectedOptions.item(0).dataset.slug
+                slug    : event.target.selectedOptions.item(0).dataset.slug
             })
         });
-        // this.state.create.parentId = event.target.value;
-        // this.state.create.slug = event.target.selectedOptions.item(0).dataset.slug;
-
-        console.log(this.state.create);
     }
 
 
     componentDidMount() {
+
+        console.log("I'm diMount");
         let apiPath = IspCpConfig.ApiRequest("/terms/");
         let location = this.props.location.pathname;
         if (location.startsWith("/terms/") && location.length > "/terms/".length) {
@@ -108,28 +108,26 @@ export default class Terms extends React.Component {
 
         axios.get(apiPath, {
             params: {
-                email: axios.defaults.params.email,
+                email   : axios.defaults.params.email,
                 password: axios.defaults.params.password
             }
         })
-            .then(
-                result => {
-                    console.log(result);
-                    this.setState({
-                        success: result.data.success,
-                        term: result.data.term,
-                        children: result.data.children,
-                        create: Term
-                    });
-                }
-            )
-            .catch(reason => {
-                console.log(reason)
-            })
+             .then(
+                 result => {
+                     console.log("Did mount api result : " + JSON.stringify(result));
+                     this.setState({
+                         success: result.data.success,
+                         terms  : result.data.terms,
+                         create : this.state.create
+                     });
+                 }
+             )
+             .catch(reason => {
+                 console.log(reason)
+             })
     }
 
-    setInitialState() {
-    }
+    setInitialState() {}
 
     componentDidUpdate(prevProps) {
         console.log(prevProps.location);
@@ -140,39 +138,39 @@ export default class Terms extends React.Component {
     }
 
     render() {
-
-        const {term} = this.state.term;
-        const {children} = this.state.children;
+        console.log("I'm render");
+        console.log(this.state.create);
+        // setTimeout(this.componentDidMount, this.updateTimeout);
         if (this.state.success) {
-            // setTimeout(this.componentDidMount, this.updateTimeout);
-
+            const {term} = this.state.terms[0];
             return (
-                <div>
+                <Box component={"div"}>
                     <List>
-                        {this.state.children.map(child =>
-                            <TermsListItem key={child.id} id={child.id} title={child.title} slug={child.slug} onClick={this.onSubmit}/>
-                        )}
+                        {this.state.terms.map(term=>{return(
+                            <TermsListItem key={term.id} term={term} handleDeleteTerm={this.onSubmit}></TermsListItem>
+                        )})}
                     </List>
                     <TermsForm
                         term={this.state.term}
                         slug={this.state.create.slug}
                         parentId={this.state.create.parentId}
                         title={this.state.create.title}
-                        children={this.state.children}
+                        children={this.state.terms}
                         onSubmit={this.onSubmit}
                         onChange={this.onParentSelect}
                     />
-                </div>
+                </Box>
             );
         } else {
+            const term = this.state.terms[0];
             return (
                 <div>
                     <TermsForm
-                        term={this.state.term}
-                        slug={this.state.create.slug}
-                        parentId={this.state.create.parentId}
-                        title={this.state.create.title}
-                        children={this.state.children}
+                        term={this.state.terms[0]}
+                        slug={this.state.terms[0].slug}
+                        parentId={this.state.terms[0].parentId}
+                        title={this.state.terms[0].title}
+                        children={this.state.terms[0].children}
                         onSubmit={this.onSubmit}
                         onChange={this.onParentSelect}
                     />
@@ -182,23 +180,13 @@ export default class Terms extends React.Component {
     }
 }
 
-function TermsListItem(props) {
-    if (!props.id) return '';
-    return(
-        <ListItem>
-            <Link to={"/terms/" + props.id} component={RLink}>{props.title}</Link>
-            <Button type={"button"} data-delete={props.id} onClick={props.onClick}>DELETE</Button>
-        </ListItem>
-    );
-}
-
-const useStyles = makeStyles(theme => ({
-    root: {
+const termsFormStyles = makeStyles(theme => ({
+    root   : {
         flexGrow: 1,
     },
-    paper: {
+    paper  : {
         height: 140,
-        width: 100,
+        width : 100,
     },
     control: {
         padding: theme.spacing(2),
@@ -208,20 +196,21 @@ const useStyles = makeStyles(theme => ({
 function TermsForm(props) {
     const term = props.term || {id: false};
     const children = props.children || [];
-    const classes = useStyles();
+    const classes = termsFormStyles();
+    console.log("Form props : " + JSON.stringify(props));
 
     return (
-       <Box component={"form"} onSubmit={props.onSubmit} variant={"outlined"}>
+        <Box component={"form"} onSubmit={props.onSubmit} variant={"outlined"}>
 
             <Grid container justify="flex-start" spacing={4}>
                 <Grid key={0} item>
                     <TextField
-                    label={"Название"}
-                    name={"title"}
-                    defaultValue={''}
-                    variant={"standard"}
-                >
-                </TextField>
+                        label={"Название"}
+                        name={"title"}
+                        defaultValue={''}
+                        variant={"standard"}
+                    >
+                    </TextField>
                 </Grid>
                 <Grid key={1} item>
                     <FormControl>
@@ -232,14 +221,15 @@ function TermsForm(props) {
                             onChange={props.onChange}
                             inputProps={{
                                 name: 'parent',
-                                id: 'parent-id-select',
+                                id  : 'parent-id-select',
                             }}
                             value={props.parentId}
                         >
                             <option key={0} value={0} data-slug={"root"}>Корень</option>
                             {term.id && <option key={term.id} value={term.id}>{term.title}</option>}
                             {children.map(child =>
-                                <option key={child.id} value={child.id} data-slug={slugify(child.title)}>{child.title}</option>
+                                <option key={child.id} value={child.id}
+                                        data-slug={slugify(child.title)}>{child.title}</option>
                             )}
                         </NativeSelect>
                     </FormControl>
@@ -254,8 +244,7 @@ function TermsForm(props) {
             <Input type={"hidden"} name={"slug"} value={props.slug}/>
 
 
-
-       </Box>
+        </Box>
     );
 }
 

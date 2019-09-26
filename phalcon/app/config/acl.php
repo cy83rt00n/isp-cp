@@ -53,6 +53,8 @@ $Acl->allow("Engineer", "Issues", "index");
 $Acl->allow("Engineer", "Issues", "item");
 $Acl->allow("Engineer", "Issues", "report");
 
+$Acl->allow("Manager", "Terms", ["index","item"]);
+
 /**
  * Manager inherits Engineer.
  * Can update/resolve issues, create/delete terms, view/delete users
