@@ -1,15 +1,14 @@
 FROM node:8
 
-ADD ./www/react/yarn.lock /yarn.lock
-ADD ./www/react/package.json /package.json
-ADD ./www/react/run.sh /run.sh
+ADD ./react/yarn.lock /yarn.lock
+ADD ./react/package.json /package.json
+ADD ./react/run.sh /run.sh
 
 ENV NODE_PATH=/node_modules
 ENV PATH=$PATH:/node_modules/.bin
 
-RUN apt-get update  && apt-get install xsel
-RUN yarn global add yarn
-RUN yarn global add serve
+RUN apt-get update  && apt-get install -y xsel curl
+RUN yarn global add yarn serve
 RUN yarn
 
 EXPOSE 3000
