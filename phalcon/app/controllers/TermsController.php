@@ -9,17 +9,18 @@ class TermsController extends ControllerBase
          * Locals
          */
 
-        $term           = new Term();
-        $term->id       = 0;
-        $term->slug     = "root";
-        $term->title    = "root";
-        $term->parentId = 0;
-        $response = ["success"=>false, "term"=>$term, "children"=>[]];
+        $rootTerm           = new stdClass();
+        $rootTerm->id       = 0;
+        $rootTerm->slug     = "root";
+        $rootTerm->title    = "root";
+        $rootTerm->parentId = 0;
+        $rootTerm->children = [];
+        $response = ["success"=>false, "terms"=>[$rootTerm]];
 
         /**
          * Externals
          */
-        $slug = $this->filter->sanitize($parentId, "absint");
+        $parentId = $this->filter->sanitize($parentId, "absint");
 
         /**
          * Checking access
@@ -37,18 +38,13 @@ class TermsController extends ControllerBase
                 ]
             ]);
 
+            if (sizeof($children)>0) $response["terms"] = [];
+
             foreach ($children as $child) {
-                $response["children"][] = $child;
+                $response["terms"][] = $this->item($child->id, true);
             }
 
-            if ($slug !== 0) {
-                $term = Term::findFirst($parentId);
-            }
-
-            if ($term) {
-                $response["success"] = true;
-                $response["term"]    = $term;
-            }
+            $response["success"] = true;
         }
 
         /**
@@ -58,23 +54,18 @@ class TermsController extends ControllerBase
         $this->response->setContent($content)->send();
     }
 
-    public function item($id)
+    public function item($id, $internal=false)
     {
         /**
          * Locals
          */
 
-        $term           = new Term();
-        $term->id       = 0;
-        $term->slug     = "root";
-        $term->title    = "root";
-        $term->parentId = 0;
-        $response = ["success"=>false, "term"=>$term];
+        $response = ["success"=>false, "term"=>null];
 
         /**
          * Externals
          */
-        $slug = $this->filter->sanitize($id, "absint");
+        $id = $this->filter->sanitize($id, "absint");
 
         /**
          * Checking access
@@ -89,9 +80,22 @@ class TermsController extends ControllerBase
 
             if ($term) {
                 $response["success"] = true;
-                $response["term"]    = $term;
+                $response["term"] = $this->copyObject($term,new stdClass());
+                $response["term"]->children = [];
+                $children = Term::find([
+                    "parentId=:parentId:",
+                    "bind" => [
+                        "parentId" => $id
+                    ]
+                ]);
+                foreach ($children as $child) {
+                    $response["term"]->children[] = $child;
+                }
+
             }
         }
+
+        if ($internal) return $response["term"];
 
         /**
          * Building response.
@@ -134,7 +138,7 @@ class TermsController extends ControllerBase
 
     }
 
-    public function delete($termId)
+    public function delete()
     {
         /**
          * Locals
@@ -144,7 +148,7 @@ class TermsController extends ControllerBase
         /**
          * Externals
          */
-        $termId = $this->filter->sanitize($termId, "absint");
+        $termId = $this->request->get("id", "absint", 0);
 
         /**
          * Cheking permissions
@@ -182,6 +186,15 @@ class TermsController extends ControllerBase
             "children" => json_encode(["termId" => array_keys(get_class_vars("Term"))])
         ]);
         $this->response->setContent($content)->send();
+    }
+
+    private function copyObject($source, $recipient)
+    {
+        foreach ($source as $fieldName=>$fieldValue) {
+            $recipient->$fieldName = $fieldValue;
+        }
+
+        return $recipient;
     }
 
 }
