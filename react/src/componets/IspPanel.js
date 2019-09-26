@@ -4,6 +4,17 @@ import IspCpConfig from "../IspCpConfig";
 import User from "../models/User";
 import LoginForm from "./LoginForm";
 import DefaultPanel from "./DefaultPanel";
+import {AppBar} from "@material-ui/core";
+import Toolbar from "@material-ui/core/Toolbar";
+import IconButton from "@material-ui/core/IconButton";
+import Typography from "@material-ui/core/Typography";
+import MenuIcon from '@material-ui/icons/Menu';
+import {makeStyles} from "@material-ui/core";
+
+
+import MenuList from "@material-ui/core/MenuList";
+import MenuItem from "@material-ui/core/MenuItem";
+import Menu from "@material-ui/core/Menu";
 
 export default class IspPanel extends React.Component {
 
@@ -23,6 +34,7 @@ export default class IspPanel extends React.Component {
         user.email = form.email.value;
         user.pass = form.pass.value;
 
+
         axios.get(IspCpConfig.ApiRequest("/users/login"), {
             params: {email: user.email, password: user.pass}
         }).then(response => {
@@ -30,6 +42,8 @@ export default class IspPanel extends React.Component {
             this.setState({
                 user: user
             });
+        }).catch((exception) => {
+            console.log(exception);
         });
     }
 
@@ -42,9 +56,42 @@ export default class IspPanel extends React.Component {
                 email: email,
                 password: pass
             };
-            return (<DefaultPanel/>);
+            const username = email.split("@")[0].toUpperCase();
+
+            return ([<DefaultPanel username={username}/>]);
         }
-        return (<LoginForm onSubmit={this.handleSubmitLoginForm} email={email} pass={pass}/>);
+        return ([<IspPanelAppBar/>, <LoginForm onSubmit={this.handleSubmitLoginForm} email={email} pass={pass}/>]);
     }
 
+}
+
+const useStyles = makeStyles(theme => ({
+    root: {
+        flexGrow: 1,
+    },
+    menuButton: {
+        marginRight: theme.spacing(2),
+    },
+    title: {
+        flexGrow: 1,
+    },
+}));
+
+
+function IspPanelAppBar(props) {
+    const classes = useStyles();
+    const username = props.username || '';
+
+    return (
+        <AppBar position="static">
+            <Toolbar>
+                <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
+                    <MenuIcon/>
+                </IconButton>
+                <Typography variant="h6" className={classes.title}>
+                    {username}@ISP.CP
+                </Typography>
+            </Toolbar>
+        </AppBar>
+    );
 }
