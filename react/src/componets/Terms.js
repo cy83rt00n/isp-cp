@@ -29,8 +29,8 @@ export default class Terms extends React.Component {
         console.log("I'm constructor");
         this.state = {
             success: false,
-            terms  : [new Term({})],
-            create : new Term({})
+            terms: [],
+            create: new Term({})
         };
         console.log("My state is " + JSON.stringify(this.state));
         this.updateTimeout = 10000;
@@ -45,11 +45,11 @@ export default class Terms extends React.Component {
         let url = IspCpConfig.ApiRequest("/terms/create/");
         axios.get(url, {
             params: {
-                email   : axios.defaults.params.email,
+                email: axios.defaults.params.email,
                 password: axios.defaults.params.password,
-                slug    : eventTarget.slug.value,
-                title   : eventTarget.title.value,
-                parent  : eventTarget.parent.value
+                slug: eventTarget.slug.value,
+                title: eventTarget.title.value,
+                parent: eventTarget.parent.value
             }
         }).then(
             result => {
@@ -64,9 +64,9 @@ export default class Terms extends React.Component {
         let url = IspCpConfig.ApiRequest("/terms/delete/");
         axios.get(url, {
             params: {
-                email   : axios.defaults.params.email,
+                email: axios.defaults.params.email,
                 password: axios.defaults.params.password,
-                id      : id
+                id: id
             }
         }).then(
             result => {
@@ -88,11 +88,12 @@ export default class Terms extends React.Component {
     onParentSelect(event) {
 
         console.log(event.target.value);
+        let slice = this.state.create;
+        slice.parentId = event.target.value;
+        slice.slug = event.target.selectedOptions.item(0).dataset.slug;
+        const create = slice;
         this.setState({
-            create: new Term({
-                parentId: event.target.value,
-                slug    : event.target.selectedOptions.item(0).dataset.slug
-            })
+            create: create
         });
     }
 
@@ -108,26 +109,27 @@ export default class Terms extends React.Component {
 
         axios.get(apiPath, {
             params: {
-                email   : axios.defaults.params.email,
+                email: axios.defaults.params.email,
                 password: axios.defaults.params.password
             }
         })
-             .then(
-                 result => {
-                     console.log("Did mount api result : " + JSON.stringify(result));
-                     this.setState({
-                         success: result.data.success,
-                         terms  : result.data.terms,
-                         create : this.state.create
-                     });
-                 }
-             )
-             .catch(reason => {
-                 console.log(reason)
-             })
+            .then(
+                result => {
+                    console.log("Did mount api result : " + JSON.stringify(result));
+                    this.setState({
+                        success: result.data.success,
+                        terms: result.data.terms,
+                        create: {children: [new Term({})].concat(result.data.terms)}
+                    });
+                }
+            )
+            .catch(reason => {
+                console.log(reason)
+            })
     }
 
-    setInitialState() {}
+    setInitialState() {
+    }
 
     componentDidUpdate(prevProps) {
         console.log(prevProps.location);
@@ -139,54 +141,47 @@ export default class Terms extends React.Component {
 
     render() {
         console.log("I'm render");
-        console.log(this.state.create);
+        console.log(this.state);
         // setTimeout(this.componentDidMount, this.updateTimeout);
-        if (this.state.success) {
-            const {term} = this.state.terms[0];
-            return (
-                <Box component={"div"}>
+        const list = (state) => {
+            console.log("Im arow list func");
+            console.log(state);
+            if (state.success === false) {
+                return ('');
+            } else {
+                return (
                     <List>
-                        {this.state.terms.map(term=>{return(
-                            <TermsListItem key={term.id} term={term} handleDeleteTerm={this.onSubmit}></TermsListItem>
-                        )})}
+                        {state.terms.map(term => {
+                            return (
+                                <TermsListItem key={term.id} term={term}
+                                               handleDeleteTerm={this.onSubmit}></TermsListItem>
+                            )
+                        })}
                     </List>
-                    <TermsForm
-                        term={this.state.term}
-                        slug={this.state.create.slug}
-                        parentId={this.state.create.parentId}
-                        title={this.state.create.title}
-                        children={this.state.terms}
-                        onSubmit={this.onSubmit}
-                        onChange={this.onParentSelect}
-                    />
-                </Box>
-            );
-        } else {
-            const term = this.state.terms[0];
-            return (
-                <div>
-                    <TermsForm
-                        term={this.state.terms[0]}
-                        slug={this.state.terms[0].slug}
-                        parentId={this.state.terms[0].parentId}
-                        title={this.state.terms[0].title}
-                        children={this.state.terms[0].children}
-                        onSubmit={this.onSubmit}
-                        onChange={this.onParentSelect}
-                    />
-                </div>
-            );
-        }
+                )
+            }
+        };
+
+        return (
+            <Box component={"div"}>
+                {list(this.state)}
+                <TermsForm
+                    term={this.state.create}
+                    onSubmit={this.onSubmit}
+                    onChange={this.onParentSelect}
+                />
+            </Box>
+        );
     }
 }
 
 const termsFormStyles = makeStyles(theme => ({
-    root   : {
+    root: {
         flexGrow: 1,
     },
-    paper  : {
+    paper: {
         height: 140,
-        width : 100,
+        width: 100,
     },
     control: {
         padding: theme.spacing(2),
@@ -194,8 +189,6 @@ const termsFormStyles = makeStyles(theme => ({
 }));
 
 function TermsForm(props) {
-    const term = props.term || {id: false};
-    const children = props.children || [];
     const classes = termsFormStyles();
     console.log("Form props : " + JSON.stringify(props));
 
@@ -221,16 +214,11 @@ function TermsForm(props) {
                             onChange={props.onChange}
                             inputProps={{
                                 name: 'parent',
-                                id  : 'parent-id-select',
+                                id: 'parent-id-select',
                             }}
-                            value={props.parentId}
+                            value={props.term.parentId}
                         >
-                            <option key={0} value={0} data-slug={"root"}>Корень</option>
-                            {term.id && <option key={term.id} value={term.id}>{term.title}</option>}
-                            {children.map(child =>
-                                <option key={child.id} value={child.id}
-                                        data-slug={slugify(child.title)}>{child.title}</option>
-                            )}
+                            <TermsOptionsList term={props.term}/>
                         </NativeSelect>
                     </FormControl>
                 </Grid>
@@ -241,11 +229,32 @@ function TermsForm(props) {
             </Grid>
 
             <Input type={"hidden"} name={"create"} value={0}/>
-            <Input type={"hidden"} name={"slug"} value={props.slug}/>
+            <Input type={"hidden"} name={"slug"} value={props.term.slug}/>
 
 
         </Box>
     );
+}
+
+function TermsOptionsList(props) {
+    console.log(props.term);
+    if (props.term.children.length === 0) {
+        return (
+            <option key={props.term.id} value={props.term.id}
+                    data-slug={slugify(props.term.title)}>{props.term.title}</option>
+        );
+    } else {
+        console.log("ImOptionsList");
+        console.log(props.term);
+        return ([
+            props.term.id && <option key={props.term.id} value={props.term.id}>{props.term.title}</option>,
+
+            props.term.children.map(child =>
+                <TermsOptionsList term={child}/>
+            )
+
+        ]);
+    }
 }
 
 

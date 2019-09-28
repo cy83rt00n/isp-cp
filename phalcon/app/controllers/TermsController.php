@@ -89,7 +89,7 @@ class TermsController extends ControllerBase
                     ]
                 ]);
                 foreach ($children as $child) {
-                    $response["term"]->children[] = $child;
+                    $response["term"]->children[] = $this->item($child->id, true);
                 }
 
             }
