@@ -90,7 +90,7 @@ export default class Terms extends React.Component {
         console.log(event.target.value);
         let slice = this.state.create;
         slice.parentId = event.target.value;
-        slice.slug = event.target.selectedOptions.item(0).dataset.slug;
+        slice.slug = slugify(event.target.selectedOptions.item(0).textContent);
         const create = slice;
         this.setState({
             create: create

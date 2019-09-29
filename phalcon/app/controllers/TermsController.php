@@ -3,7 +3,7 @@
 class TermsController extends ControllerBase
 {
 
-    public function index($parentId=0)
+    public function index($parent = 0)
     {
         /**
          * Locals
@@ -20,7 +20,14 @@ class TermsController extends ControllerBase
         /**
          * Externals
          */
-        $parentId = $this->filter->sanitize($parentId, "absint");
+
+        $parentId = (is_numeric($parent)) ? $this->filter->sanitize($parent, "absint", false) : false;
+        $filter = ["parentId=:parentId:", "bind" => ["parentId" => $parentId]];
+        if ($parentId === false) {
+            $slug = $this->filter->sanitize($parent, "string", false);
+            $filter = ["slug=:slug:", "bind" => ["slug" => $slug]];
+        }
+
 
         /**
          * Checking access
@@ -31,12 +38,7 @@ class TermsController extends ControllerBase
          * Gathering data
          */
         if($allowed) {
-            $children = Term::find([
-                "parentId=:parentId:",
-                "bind" => [
-                    "parentId" => $parentId
-                ]
-            ]);
+            $children = Term::find($filter);
 
             if (sizeof($children)>0) $response["terms"] = [];
 
@@ -92,6 +94,12 @@ class TermsController extends ControllerBase
                     $response["term"]->children[] = $this->item($child->id, true);
                 }
 
+            } else {
+                $response["success"] = true;
+                $response["term"] = $this->copyObject(new Term(), new stdClass());
+                $response["term"]->slug = "root";
+                $response["term"]->title = "Корень";
+                $response["term"]->children = [];
             }
         }
 
