@@ -119,19 +119,13 @@ class AclHelper
         return array_flip(self::$roles)["Guest"];
     }
 
-    public static function currentUserRole($app)
+    public static function currentUserRole($DI)
     {
-        /**
-         * Get route pattern
-         */
-        $app->get('router')->handle();
-
-        $routePattern = $app->getRouter()->getMatchedRoute()->getCompiledPattern();
-
         /**
          * Is it for registration
          */
-        if ($routePattern == "/api/users/register") {
+
+        if ($DI->get("router")->getRewriteURI() == "/api/users/register") {
             $_GET["role"] = "Guest";
             return true;
         }
@@ -139,14 +133,14 @@ class AclHelper
         /**
          * Check user login
          */
-        $app->get('dispatcher')->forward([
+        $DI->get('dispatcher')->forward([
             "controller" => "Users",
             "action" => "login"
         ]);
-        $app->get('dispatcher')->setActionSuffix('');
-        $app->get('dispatcher')->dispatch();
+        $DI->get('dispatcher')->setActionSuffix('');
+        $DI->get('dispatcher')->dispatch();
 
-        $response = $app->get('dispatcher')->getReturnedValue();
+        $response = $DI->get('dispatcher')->getReturnedValue();
 
 
         /**
@@ -190,7 +184,6 @@ class AclListener
      */
     public function beforeCheckAccess(Event $event, AclList $Acl)
     {
-//        AclHelper::currentUserRole($this->application->di);
         $this->isSuperAdmin($Acl);
     }
 
@@ -201,8 +194,8 @@ class AclListener
      */
     private function isSuperAdmin(AclList $Acl)
     {
-        $role = $this->application->request->get("role", "string");
-        $password = $this->application->request->get("pass", "string");
+        $role = $this->application->request->get("email", "string");
+        $password = $this->application->request->get("password", "string");
         $userID = AclHelper::roleId($role);
         if ($userID == 99999999999 && $password == "secret") {
             $Acl->setDefaultAction(Acl::ALLOW);

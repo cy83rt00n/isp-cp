@@ -1,7 +1,5 @@
 import React from 'react';
 import LabelIcon from '@material-ui/icons/Label';
-import ExpandMore from '@material-ui/icons/ExpandMore';
-import ExpandLess from '@material-ui/icons/ExpandLess';
 import {makeStyles} from "@material-ui/core";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
@@ -13,8 +11,9 @@ import Button from "@material-ui/core/Button";
 export default function TermsListItem(props) {
     console.log("I'm TermsListItem : ");
     console.log(props);
-    const item = (props.term.children.length === 0) ? <EmptyTerm  title={props.term.title} handleDeleteTerm={props.handleDeleteTerm} id={props.term.id}/> :
-        <HierTerm term={props.term}  handleDeleteTerm={props.handleDeleteTerm} id={props.term.id}/>;
+    const item = (props.term.children.length === 0) ?
+        <EmptyTerm title={props.term.title} handleDeleteTerm={props.handleDeleteTerm} id={props.term.id}/> :
+        <HierTerm term={props.term} handleDeleteTerm={props.handleDeleteTerm} id={props.term.id}/>;
     return (item);
 }
 
@@ -31,7 +30,8 @@ function EmptyTerm(props) {
                 <LabelIcon/>
             </ListItemIcon>
             <ListItemText primary={props.title}/>
-            <Button type="button" onClick={props.handleDeleteTerm} data-delete={props.id} color="primary" variant={"outlined"}>
+            <Button type="button" onClick={props.handleDeleteTerm} data-delete={props.id} color="primary"
+                    variant={"outlined"}>
                 DELETE
             </Button>
         </ListItem>
@@ -39,9 +39,9 @@ function EmptyTerm(props) {
 }
 
 const hierStyles = makeStyles(theme => ({
-    root  : {
-        width          : '100%',
-        maxWidth       : 360,
+    root: {
+        width: '100%',
+        maxWidth: 360,
         backgroundColor: theme.palette.background.paper,
     },
     nested: {
@@ -64,10 +64,16 @@ function HierTerm(props) {
                 <List key={"term-" + props.term.id + "-neseted"} component="div" disablePadding>
                     {
                         props.term.children.map(child => {
-                            return (
-
-                                <EmptyTerm key={"term-" + child.id} className={classes.nested} title={child.title} handleDeleteTerm={props.handleDeleteTerm} id={child.id}/>
-                            );
+                            if (child.children.length === 0) {
+                                return (
+                                    <EmptyTerm key={"term-" + child.id} className={classes.nested} title={child.title}
+                                               handleDeleteTerm={props.handleDeleteTerm} id={child.id}/>
+                                );
+                            } else {
+                                return (
+                                    <HierTerm term={child} handleDeleteTerm={props.handleDeleteTerm} id={child.id}/>
+                                );
+                            }
                         })
                     }
                 </List>

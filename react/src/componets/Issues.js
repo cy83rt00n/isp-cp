@@ -5,16 +5,21 @@ import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import TextField from '@material-ui/core/TextField';
-
+import ListItem from "@material-ui/core/ListItem";
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
-import NativeSelect from '@material-ui/core/NativeSelect';
 import {slugify} from 'transliteration';
 import Modal from '@material-ui/core/Modal';
-import { makeStyles } from '@material-ui/core/styles';
+import {makeStyles} from '@material-ui/core/styles';
+import Box from "@material-ui/core/Box";
+import {ListItemText} from "@material-ui/core";
+import NativeSelect from "@material-ui/core/NativeSelect";
+import {serialize} from "react-serialize";
+import IspCpHelper from "../IspCpHelper";
+import IssueForm from "./IssueForm";
 
 
 var he = require('he');
@@ -29,15 +34,17 @@ export default class Issues extends React.Component {
         super(props);
         this.state = {
             success: false,
-            data   : []
+            data: []
         };
+        this.ispcpHelper = new IspCpHelper();
+        this.passState = this.passState.bind(this);
         this.handleSubmit = this.handleSubmit.bind(this);
         this.componentDidMount = this.componentDidMount.bind(this);
+        this.callUpdate = this.callUpdate.bind(this);
         issusesInstance = this;
     }
 
-    callUpdate()
-    {
+    callUpdate() {
         this.componentDidMount();
     }
 
@@ -45,11 +52,7 @@ export default class Issues extends React.Component {
         event.preventDefault();
         console.log(event.currentTarget);
         window.Target = event.currentTarget;
-        // if (event.currentTarget.dataset.report) {
-        //     var issueForm = document.querySelector("form#issue-report");
-        //     console.log("Report : " + issueForm.comment.value);
-        //     this.reportIssue(issueForm.comment.value);
-        // }
+
         if (event.currentTarget.dataset.update) {
             // var issueForm = document.querySelector("form#issue-edit-" + event.currentTarget.dataset.update);
             console.log("Udate " + event.currentTarget.dataset.update);
@@ -65,49 +68,42 @@ export default class Issues extends React.Component {
     }
 
     resolveIssue(id) {
-        let url = IspCpConfig.ApiRequest("/issues/resolve/" + id);
-        axios.get(url,).then(
-            result => {
-                this.componentDidMount()
-            }
-        );
+        new IspCpHelper().callApi("/issues/resolve/" + id, null, this.componentDidMount);
     }
 
     updateIssue(id, comment) {
-        let url = IspCpConfig.ApiRequest("/issues/update/" + id + "?comment=" + comment);
-        axios.get(url).then(
-            result => {
-                this.componentDidMount()
-            }
-        );
+        new IspCpHelper().callApi("/issues/update/" + id + "?comment=" + comment, null, this.componentDidMount);
     }
 
 
     componentDidMount() {
-        let apiPath = IspCpConfig.ApiRequest("/issues/");
+        let apiPath = "/issues/";
         let location = this.props.location.pathname;
         if (location.startsWith("/issues/") && location.length > "/issues/".length) {
-            apiPath = IspCpConfig.ApiRequest(location);
+            apiPath = location;
         }
-
-        axios.get(apiPath, {
-            params: axios.defaults.params
-        })
-             .then(
-                 result => {
-                     this.setState({
-                         success: result.data.success,
-                         data   : result.data.index
-                     });
-                     // console.log(result);
-                 }
-             )
+        new IspCpHelper().callApi(apiPath, null, this.passState);
     }
+
+    passState = (response) => {
+        response.data.index = JSON.parse(response.data.index);
+        response.data.index.map(async (issue) => {
+            issue.comment = JSON.parse(he.decode(issue.comment));
+            issue = Object.assign({}, issue);
+        })
+        this.setState(() => {
+            return {
+                success: response.data.success,
+                data: response.data.index
+            }
+        });
+
+    };
 
 
     render() {
         if (this.state.success) {
-            const data = JSON.parse(this.state.data);
+            const data = this.state.data;
             // setTimeout(this.componentDidMount, this.updateTimeout);
             return (
                 <Paper>
@@ -118,9 +114,10 @@ export default class Issues extends React.Component {
                                 <TableCell>Reported </TableCell>
                                 <TableCell>Resolved</TableCell>
                                 <TableCell>Address</TableCell>
+                                <TableCell>Engineer</TableCell>
                                 <TableCell>Comment</TableCell>
                                 <TableCell>
-                                    <IssueForm/>
+                                    <IssueForm afterReport={this.callUpdate}/>
                                 </TableCell>
                             </TableRow>
                         </TableHead>
@@ -136,13 +133,19 @@ export default class Issues extends React.Component {
                                     }
                                 </TableCell>
                                 <TableCell>
-                                    <AddressList location={"/terms/15"} id={"address-" + issue.id} value={0}/>
+                                    {issue.comment.address.city.title} /
+                                    {issue.comment.address.street.title} /
+                                    {issue.comment.address.home.title} /
+                                    {issue.comment.address.flat.title}
+                                </TableCell>
+                                <TableCell>
+                                    {issue.comment.engineer.title}
                                 </TableCell>
                                 <TableCell>
                                     <TextField
                                         label="Комментарий"
                                         id={"comment-" + issue.id}
-                                        defaultValue={issue.comment ? he.decode(issue.comment) : ''}
+                                        defaultValue={issue.comment.comment ? he.decode(issue.comment.comment) : ''}
                                         margin="normal"
                                         variant="outlined"
                                     /></TableCell>
@@ -169,320 +172,5 @@ export default class Issues extends React.Component {
     }
 }
 
-const formStyles = makeStyles(theme => ({
-    modal: {
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    paper: {
-        backgroundColor: theme.palette.background.paper,
-        border: '2px solid #000',
-        boxShadow: theme.shadows[5],
-        padding: theme.spacing(2, 4, 3),
-    },
-}));
-
-function IssueForm() {
-
-    const classes = formStyles();
-    const [open, setOpen] = React.useState(false);
-
-    const handleClose = () => {
-        setOpen(false);
-    }
-
-    const handleOpen = () => {
-        setOpen(true);
-    }
-
-    const reportIssue = (event) => {
-        event.preventDefault();
-        console.log(event.target.comment_new.value);
-        let url = IspCpConfig.ApiRequest("/issues/report/?comment=" + event.target.comment_new.value);
-        axios.get(url).then(
-            result => {
-                handleClose();
-                issusesInstance.callUpdate();
-            }
-        );
-    }
-
-    return (
-        <div>
-            <Button onClick={handleOpen} color="secondary" variant={"outlined"}>REPORT</Button>
-            <Modal
-                aria-labelledby="transition-modal-title"
-                aria-describedby="transition-modal-description"
-                open={open}
-                closeAfterTransition
-                onClose={handleClose}
-                className={classes.modal}
-            >
-
-                <form className={classes.paper} onSubmit={reportIssue}>
-                    <h2 id="transition-modal-title">REPORT ISSUE</h2>
-                    <div>
-                        <AddressList location={"/terms/1"} id={"address-new"} value={0}/>
-                    </div>
-                    <div>
-                        <TextField
-                            label="Комментарий"
-                            id={"transition-modal-description"}
-                            defaultValue={""}
-                            margin="normal"
-                            variant="outlined"
-                            name={"comment_new"}
-                        />
-                        <Button type="submit" color="secondary" variant={"outlined"}>REPORT</Button>
-                    </div>
-                </form>
-            </Modal>
-        </div>
-    );
-
-};
-
-class AddressList extends React.Component {
 
 
-
-    constructor(props) {
-        super(props);
-        this.state = {
-            address: {term:{id:0},children:[]},
-            houses: {term:{id:0},children:[]},
-            flats: {term:{id:0},children:[]},
-            selectedAddress:0,
-            selectedHouse:0,
-            selectedFlat:0
-        };
-        this.apiPath = IspCpConfig.ApiRequest("/terms/");
-        this.location = props.location;
-        this.addrSelected = this.addrSelected.bind(this);
-    }
-
-    componentDidMount() {
-
-        if (this.location.startsWith("/terms/") && this.location.length > "/terms/".length) {
-            this.apiPath = IspCpConfig.ApiRequest(this.location);
-        }
-
-        axios.get(this.apiPath)
-             .then(
-                 result => {
-                     this.setState({
-                         address: result.data,
-                         houses: {term:{id:0},children:[]},
-                         flats: {term:{id:0},children:[]},
-                         selectedAddress: result.data.term.id,
-                         selectedHouse:0,
-                         selectedFlat:0
-                     });
-                 }
-             )
-             .catch(reason => {
-                 console.log("Axios error: " + reason)
-             })
-        ;
-    }
-
-    addrSelected = (event) => {
-        console.log(event.target.value);
-        var selectedId = event.target.value;
-        var apiPath = IspCpConfig.ApiRequest("/terms/" + selectedId);
-        axios.get(apiPath)
-             .then(
-                 result => {
-                     this.setState({
-                         address: this.state.address,
-                         houses: result.data,
-                         flats: {term:{id:0},children:[]},
-                         selectedAddress: selectedId,
-                         selectedHouse:0,
-                         selectedFlat:0
-                     });
-                     this.forceUpdate();
-                 }
-             )
-             .catch(reason => {
-                 console.log("Axios error: " + reason)
-             })
-        ;
-
-    }
-
-    houseSelected = (event) => {
-        console.log(event.target.value);
-        var selectedId = event.target.value;
-        var apiPath = IspCpConfig.ApiRequest("/terms/" + selectedId);
-        axios.get(apiPath)
-             .then(
-                 result => {
-                     this.setState({
-                         address: this.state.address,
-                         houses: this.state.houses,
-                         flats: result.data,
-                         selectedAddress: this.state.selectedAddress,
-                         selectedHouse:selectedId,
-                         selectedFlat:0
-                     });
-                     this.forceUpdate();
-                 }
-             )
-             .catch(reason => {
-                 console.log("Axios error: " + reason)
-             })
-        ;
-
-    }
-
-    flatSelected = (event) => {
-        console.log(event.target.value);
-        var selectedId = event.target.value;
-        this.setState({
-            address: this.state.address,
-            houses: this.state.houses,
-            flats: this.state.flats,
-            selectedAddress: this.state.selectedAddress,
-            selectedHouse:this.state.selectedHouse,
-            selectedFlat:selectedId
-        });
-        this.forceUpdate();
-
-    }
-
-    render() {
-        console.log(this.state);
-        return (
-            <div>
-            <NativeSelect
-                id={this.props.id}
-                value={this.state.selectedAddress}
-                onChange={this.addrSelected}
-            >
-                <option value={0}>Улица</option>
-                {this.state.address.children.map(child =>
-                    <option key={child.id} value={child.id} data-slug={slugify(child.title)}>{child.title}</option>
-                )}
-            </NativeSelect>
-                <NativeSelect
-                    id={this.props.id + "-houses"}
-                    value={this.state.selectedHouse}
-                    onChange={this.houseSelected}
-                >
-                    <option value={0}>Дом</option>
-                    {this.state.houses.children.map(child =>
-                        <option key={child.id} value={child.id} data-slug={slugify(child.title)}>{child.title}</option>
-                    )}
-                </NativeSelect>
-                <NativeSelect
-                    id={this.props.id + "flats"}
-                    value={this.state.selectedFlat}
-                    onChange={this.flatSelected}
-                >
-                    <option value={0}>Квартира</option>
-                    {this.state.flats.children.map(child =>
-                        <option key={child.id} value={child.id} data-slug={slugify(child.title)}>{child.title}</option>
-                    )}
-                </NativeSelect>
-            </div>
-        );
-    }
-}
-
-class HousesList extends React.Component {
-
-    constructor(props) {
-        super(props);
-        this.state = {
-            term    : {},
-            children: []
-        };
-        this.apiPath = IspCpConfig.ApiRequest("/terms/");
-        this.location = props.location;
-    }
-
-    componentDidMount() {
-
-        if (this.location.startsWith("/terms/") && this.location.length > "/terms/".length) {
-            this.apiPath = IspCpConfig.ApiRequest(this.location);
-        }
-
-        axios.get(this.apiPath)
-             .then(
-                 result => {
-                     console.log(result);
-                     this.setState({
-                         term    : result.data.term,
-                         children: result.data.children
-                     });
-                 }
-             )
-             .catch(reason => {
-                 console.log("Axios error: " + reason)
-             })
-        ;
-    }
-
-    render() {
-        return (
-            <NativeSelect
-                id={this.props.id}
-                value={this.props.value}
-            >
-                {this.state.children.map(child =>
-                    <option key={child.id} value={child.id} data-slug={slugify(child.title)}>{child.title}</option>
-                )}
-            </NativeSelect>
-        );
-    }
-}
-
-class ApartmentsList extends React.Component {
-
-    constructor(props) {
-        super(props);
-        this.state = {
-            term    : {},
-            children: []
-        };
-        this.apiPath = IspCpConfig.ApiRequest("/terms/");
-        this.location = props.location;
-    }
-
-    componentDidMount() {
-
-        if (this.location.startsWith("/terms/") && this.location.length > "/terms/".length) {
-            this.apiPath = IspCpConfig.ApiRequest(this.location);
-        }
-
-        axios.get(this.apiPath)
-             .then(
-                 result => {
-                     console.log(result);
-                     this.setState({
-                         term    : result.data.term,
-                         children: result.data.children
-                     });
-                 }
-             )
-             .catch(reason => {
-                 console.log("Axios error: " + reason)
-             })
-        ;
-    }
-
-    render() {
-        return (
-            <NativeSelect
-                id={this.props.id}
-                value={this.props.value}
-            >
-                {this.state.children.map(child =>
-                    <option key={child.id} value={child.id} data-slug={slugify(child.title)}>{child.title}</option>
-                )}
-            </NativeSelect>
-        );
-    }
-}

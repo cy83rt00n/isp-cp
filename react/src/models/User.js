@@ -1,6 +1,6 @@
 export default class User {
-    id;
-    email;
-    pass;
+    id = 1;
+    email = "admin@isp.cp";
+    pass = "123456";
     role;
 }

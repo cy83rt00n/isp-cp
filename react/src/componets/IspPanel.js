@@ -20,7 +20,7 @@ export default class IspPanel extends React.Component {
 
     constructor(props) {
         super(props);
-        const user = User;
+        const user = new User();
         this.state = {
             user: user
         }
