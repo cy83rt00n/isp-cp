@@ -39,6 +39,16 @@ export default class Terms extends React.Component {
         this.onParentSelect = this.onParentSelect.bind(this);
         this.setInitialState = this.setInitialState.bind(this);
         this.setInitialState();
+        this.styles = makeStyles(theme => ({
+            root: {
+                width: '100%',
+                maxWidth: 360,
+                backgroundColor: theme.palette.background.paper,
+            },
+            nested: {
+                paddingLeft: theme.spacing(4),
+            },
+        }));
     }
 
     createTerm(eventTarget) {
@@ -143,6 +153,7 @@ export default class Terms extends React.Component {
         console.log("I'm render");
         console.log(this.state);
         // setTimeout(this.componentDidMount, this.updateTimeout);
+
         const list = (state) => {
             console.log("Im arow list func");
             console.log(state);
@@ -150,7 +161,7 @@ export default class Terms extends React.Component {
                 return ('');
             } else {
                 return (
-                    <List>
+                    <List component={"div"}>
                         {state.terms.map(term => {
                             return (
                                 <TermsListItem key={term.id} term={term}
@@ -218,7 +229,7 @@ function TermsForm(props) {
                             }}
                             value={props.term.parentId}
                         >
-                            <TermsOptionsList term={props.term}/>
+                            <TermsOptionsList key={"terms-options-list" + props.term.id} term={props.term}/>
                         </NativeSelect>
                     </FormControl>
                 </Grid>
@@ -240,17 +251,17 @@ function TermsOptionsList(props) {
     console.log(props.term);
     if (props.term.children.length === 0) {
         return (
-            <option key={props.term.id} value={props.term.id}
+            <option key={"terms-option" + props.term.id} value={props.term.id}
                     data-slug={slugify(props.term.title)}>{props.term.title}</option>
         );
     } else {
         console.log("ImOptionsList");
         console.log(props.term);
         return ([
-            props.term.id && <option key={props.term.id} value={props.term.id}>{props.term.title}</option>,
+            props.term.id && <option key={"terms-option" + props.term.id} value={props.term.id}>{props.term.title}</option>,
 
             props.term.children.map(child =>
-                <TermsOptionsList term={child}/>
+                <TermsOptionsList key={"terms-options-list" + child.id} term={child}/>
             )
 
         ]);
