@@ -14,7 +14,7 @@ yarn)
   docker-compose exec react yarn $2 $3
   ;;
 build-prod)
-  docker-compose exec react yarn && sudo chown -Rf 33:1000 react/build/ && sudo chmod -R 774 react/build/ && git add . && git commit -m "prod build"
+  rm -Rfv react/build/* && docker-compose exec react yarn && sudo chown -Rf 33:1000 react/build/ && sudo chmod -R 774 react/build/ && git add . && git commit -m "prod build"
   ;;
 install)
   docker-compose exec php php app/cli.php installation
