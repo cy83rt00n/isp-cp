@@ -20,7 +20,8 @@ import NativeSelect from "@material-ui/core/NativeSelect";
 import {serialize} from "react-serialize";
 import IspCpHelper from "../IspCpHelper";
 import IssueForm from "./IssueForm";
-
+import Address from "../models/Address";
+import Engineer from "../models/Engineer";
 
 var he = require('he');
 
@@ -72,7 +73,12 @@ export default class Issues extends React.Component {
     }
 
     updateIssue(id, comment) {
-        new IspCpHelper().callApi("/issues/update/" + id + "?comment=" + comment, null, this.componentDidMount);
+        let report = {
+            address: Address,
+            engineer: Engineer,
+            comment: comment
+        };
+        new IspCpHelper().callApi("/issues/update/" + id + "?comment=" + JSON.stringify(report), null, this.componentDidMount);
     }
 
 
@@ -87,10 +93,27 @@ export default class Issues extends React.Component {
 
     passState = (response) => {
         response.data.index = JSON.parse(response.data.index);
+        console.log(response.data.index);
         response.data.index.map(async (issue) => {
-            issue.comment = JSON.parse(he.decode(issue.comment));
-            issue = Object.assign({}, issue);
+            const decoded = he.decode(issue.comment);
+            console.log(decoded)
+            issue.comment = {
+                address: Address,
+                engineer: Engineer,
+                comment: ''
+            };
+            try {
+                const parsed = JSON.parse(decoded);
+                if (typeof(parsed)==="object") {
+                    issue.comment = parsed
+                } else {
+                    issue.comment.comment = parsed
+                }
+            } catch (e) {
+                issue.comment.comment = JSON.parse(decoded);
+            }
         })
+        console.log(response.data.index);
         this.setState(() => {
             return {
                 success: response.data.success,
@@ -145,7 +168,7 @@ export default class Issues extends React.Component {
                                     <TextField
                                         label="Комментарий"
                                         id={"comment-" + issue.id}
-                                        defaultValue={issue.comment.comment ? he.decode(issue.comment.comment) : ''}
+                                        defaultValue={issue.comment.comment}
                                         margin="normal"
                                         variant="outlined"
                                     /></TableCell>
