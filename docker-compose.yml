@@ -13,7 +13,7 @@ services:
       project_database_name: ${DB_NAME}
   react:
     container_name: "${PROJECT_NAME}_react"
-    command: ["serve", "-s", "build", "-l", "3000"]
+#    command: ["serve", "-s", "build", "-l", "3000"]
     build:
       context: .
       dockerfile: dockerfiles/react.dockerfile
