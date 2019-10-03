@@ -11,6 +11,7 @@ import Typography from "@material-ui/core/Typography";
 import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import MenuIcon from '@material-ui/icons/Menu';
+import IspPanel from "./IspPanel";
 
 const useStyles = makeStyles(theme => ({
     root: {
@@ -57,12 +58,15 @@ export default function DefaultPanel(props) {
                                                        variant={"contained"}>Issues</Button></MenuItem>
                         <MenuItem key={"tm-3"}><Button component={Link} to="/terms/" color={"primary"}
                                                        variant={"contained"}>Terms</Button></MenuItem>
+                        <MenuItem key={"tm-4"}><Button component={Link} to="/logout/" color={"primary"}
+                                                       variant={"contained"}>Log out</Button></MenuItem>
                     </Menu>
                 </Toolbar>
             </AppBar>
             <Route path="/issues" component={Issues}/>
             <Route path="/terms" component={Terms}/>
             <Route path="/options" component={Options}/>
+            <Route path="/logout" component={IspPanel}/>
         </Router>
     ]);
 }

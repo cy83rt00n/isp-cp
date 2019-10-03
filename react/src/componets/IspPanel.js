@@ -11,7 +11,6 @@ import Typography from "@material-ui/core/Typography";
 import MenuIcon from '@material-ui/icons/Menu';
 import {makeStyles} from "@material-ui/core";
 
-
 import MenuList from "@material-ui/core/MenuList";
 import MenuItem from "@material-ui/core/MenuItem";
 import Menu from "@material-ui/core/Menu";
@@ -48,14 +47,21 @@ export default class IspPanel extends React.Component {
     }
 
     render() {
-        const email = this.state.user.email;
-        const pass = this.state.user.pass;
-        const id = this.state.user.id || undefined;
+        if (window.location.pathname === '/logout/') {
+            sessionStorage.clear();
+            window.location.href = window.location.origin;
+        }
+        const email = sessionStorage.getItem("email") || this.state.user.email;
+        const pass = sessionStorage.getItem("password") || this.state.user.pass;
+        const id = this.state.user.id || sessionStorage.getItem("id");
         if (parseInt(id) > 0) {
             axios.defaults.params = {
                 email: email,
                 password: pass
             };
+            sessionStorage.setItem("id",id);
+            sessionStorage.setItem("email",email);
+            sessionStorage.setItem("password",pass);
             const username = email.split("@")[0].toUpperCase();
 
             return ([<DefaultPanel username={username}/>]);
