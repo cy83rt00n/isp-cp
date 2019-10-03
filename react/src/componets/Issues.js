@@ -22,6 +22,8 @@ import IspCpHelper from "../IspCpHelper";
 import IssueForm from "./IssueForm";
 import Address from "../models/Address";
 import Engineer from "../models/Engineer";
+import Issue from "../models/Issue";
+import IssueStatusSelect from "./IssueStatusSelect";
 
 var he = require('he');
 
@@ -93,27 +95,21 @@ export default class Issues extends React.Component {
 
     passState = (response) => {
         response.data.index = JSON.parse(response.data.index);
-        console.log(response.data.index);
-        response.data.index.map(async (issue) => {
+        response.data.index.map((issue) => {
             const decoded = he.decode(issue.comment);
-            console.log(decoded)
-            issue.comment = {
-                address: Address,
-                engineer: Engineer,
-                comment: ''
-            };
+            var model = Object.assign(Issue,issue);
             try {
                 const parsed = JSON.parse(decoded);
                 if (typeof(parsed)==="object") {
-                    issue.comment = parsed
+                    Object.assign(model,parsed);
                 } else {
-                    issue.comment.comment = parsed
+                    model.comment = parsed
                 }
             } catch (e) {
-                issue.comment.comment = JSON.parse(decoded);
+                model.comment = JSON.parse(decoded);
             }
+            Object.assign(issue,model);
         })
-        console.log(response.data.index);
         this.setState(() => {
             return {
                 success: response.data.success,
@@ -127,6 +123,7 @@ export default class Issues extends React.Component {
     render() {
         if (this.state.success) {
             const data = this.state.data;
+            console.log(data);
             // setTimeout(this.componentDidMount, this.updateTimeout);
             return (
                 <Paper>
@@ -156,19 +153,21 @@ export default class Issues extends React.Component {
                                     }
                                 </TableCell>
                                 <TableCell>
-                                    {issue.comment.address.city.title} /
-                                    {issue.comment.address.street.title} /
-                                    {issue.comment.address.home.title} /
-                                    {issue.comment.address.flat.title}
                                 </TableCell>
                                 <TableCell>
-                                    {issue.comment.engineer.title}
+                                    {issue.address.city.title} /
+                                    {issue.address.street.title} /
+                                    {issue.address.home.title} /
+                                    {issue.address.flat.title}
+                                </TableCell>
+                                <TableCell>
+                                    {issue.engineer.title}
                                 </TableCell>
                                 <TableCell>
                                     <TextField
                                         label="Комментарий"
                                         id={"comment-" + issue.id}
-                                        defaultValue={issue.comment.comment}
+                                        defaultValue={issue.comment}
                                         margin="normal"
                                         variant="outlined"
                                     /></TableCell>

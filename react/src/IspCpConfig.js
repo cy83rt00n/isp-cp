@@ -3,7 +3,7 @@ import axios from "axios";
 
 class IspCpConfig {
     ApiProtocol = "http";
-    ApiHost = "ispcp.onedext.ru";
+    ApiHost = "ctn.onedext.ru";
     ApiPort = 8080;
     ApiUrlPrefix = "/api";
     LoggedIn = false;
