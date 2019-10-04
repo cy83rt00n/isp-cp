@@ -61,7 +61,15 @@ export default class Issues extends React.Component {
             console.log("Udate " + event.currentTarget.dataset.update);
             // window.issueForm = issueForm;
             const comment = document.querySelector("#comment-" + event.currentTarget.dataset.update).value;
-            this.updateIssue(event.currentTarget.dataset.update, comment);
+            const issueIndex = document.querySelector("#status-for-issue-" + event.currentTarget.dataset.update).dataset.issueindex;
+            let report = {
+                address: this.state.data[issueIndex].address,
+                engineer: this.state.data[issueIndex].engineer,
+                comment: comment,
+                report_status: this.state.data[issueIndex].report_status
+            };
+            console.log(report);
+            this.updateIssue(event.currentTarget.dataset.update, report);
         }
         if (event.currentTarget.dataset.resolve) {
             // var issueForm = document.querySelector("form#issue-edit-" + event.currentTarget.dataset.resolve);
@@ -74,12 +82,7 @@ export default class Issues extends React.Component {
         new IspCpHelper().callApi("/issues/resolve/" + id, null, this.componentDidMount);
     }
 
-    updateIssue(id, comment) {
-        let report = {
-            address: Address,
-            engineer: Engineer,
-            comment: comment
-        };
+    updateIssue(id, report) {
         new IspCpHelper().callApi("/issues/update/" + id + "?comment=" + JSON.stringify(report), null, this.componentDidMount);
     }
 
@@ -119,11 +122,30 @@ export default class Issues extends React.Component {
 
     };
 
+    onStatusSelect = (event)=>{
+        // console.log(this.state.data);
+        // console.log(event.target);
+        // console.log(event.currentTarget);
+        // console.log(event.target.dataset.issueindex);
+        // console.log(this.state.data[event.target.dataset.issueindex]);
+        // console.log(event.target.dataset.issue);
+        // console.log(event.target.value);
+        this.state.data[event.target.dataset.issueindex].report_status.id = event.target.value;
+        this.state.data[event.target.dataset.issueindex].report_status.slug = slugify("Статусы заявок");
+        this.state.data[event.target.dataset.issueindex].report_status.title = event.target.selectedOptions.item(0).text;
+        this.componentDidMount();
+        // this.setState(() => {
+        //     return {
+        //         data: Object.assign(this.state.data,data)
+        //     }
+        // });
+    }
+
 
     render() {
         if (this.state.success) {
             const data = this.state.data;
-            console.log(data);
+            // console.log(data);
             // setTimeout(this.componentDidMount, this.updateTimeout);
             return (
                 <Paper>
@@ -141,7 +163,8 @@ export default class Issues extends React.Component {
                                 </TableCell>
                             </TableRow>
                         </TableHead>
-                        <TableBody>{data.map(issue =>
+                        <TableBody>{data.map((issue,issueIndex) => {
+                            return(
                             <TableRow key={"issue-" + issue.id}>
                                 <TableCell>{issue.id}</TableCell>
                                 <TableCell>{new Date(parseInt(issue.report_date) * 1000).toLocaleDateString()}</TableCell>
@@ -153,6 +176,7 @@ export default class Issues extends React.Component {
                                     }
                                 </TableCell>
                                 <TableCell>
+                                    <IssueStatusSelect issue={issue} issueIndex={issueIndex} defaultValue={issue.report_status.id} onChange={this.onStatusSelect}/>
                                 </TableCell>
                                 <TableCell>
                                     {issue.address.city.title} /
@@ -184,7 +208,8 @@ export default class Issues extends React.Component {
                                     </ButtonGroup>
                                 </TableCell>
                             </TableRow>
-                        )}
+                            );})
+                        }
                         </TableBody>
                     </Table>
                 </Paper>

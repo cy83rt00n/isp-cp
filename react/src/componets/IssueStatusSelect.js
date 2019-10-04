@@ -1,5 +1,5 @@
 import React from 'react';
-import {makeStyles} from "@material-ui/core";
+import {makeStyles, NativeSelect} from "@material-ui/core";
 import List from "@material-ui/core/List";
 import ListItem from "@material-ui/core/ListItem";
 import ListItemIcon from "@material-ui/core/ListItemIcon";
@@ -24,22 +24,26 @@ function IssueStatusSelect(props)
 {
     const [statuses, setStatuses] = React.useState([]);
 
+    var issue = props.issue;
+
+
     const passStatuses = (response)=>{
         setStatuses(response.data.terms);
     }
 
-    new IspCpHelper().callApi('/terms/' + slugify('Статусы заявок'),null,passStatuses);
+    if (statuses.length === 0) {
+        new IspCpHelper().callApi('/terms/' + slugify('Статусы заявок'), null, passStatuses);
+    }
 
-    console.log()
     return(
-        <Select value={0} onChange={ch}>
+        <NativeSelect id={"status-for-issue-" + issue.id} inputProps={{"data-issueindex":props.issueIndex}} value={issue.report_status.id} onChange={props.onChange}>
             <option key={"issue-status-" + 0} value={0}>{"Статус"}</option>
             {statuses.map(option=>{
                 return(
                     <option key={"issue-status-" + option.id} value={option.id}>{option.title}</option>
                 );
             })}
-        </Select>
+        </NativeSelect>
     );
 }
 
