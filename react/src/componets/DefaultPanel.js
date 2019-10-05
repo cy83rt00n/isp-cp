@@ -12,13 +12,15 @@ import Menu from "@material-ui/core/Menu";
 import MenuItem from "@material-ui/core/MenuItem";
 import MenuIcon from '@material-ui/icons/Menu';
 import IspPanel from "./IspPanel";
+import Divider from '@material-ui/core/Divider';
 
 const useStyles = makeStyles(theme => ({
     root: {
         flexGrow: 1,
     },
     menuButton: {
-        marginRight: theme.spacing(2),
+        marginRight: theme.spacing(1),
+        color: "white"
     },
     title: {
         flexGrow: 1,
@@ -41,26 +43,19 @@ export default function DefaultPanel(props) {
         <Router>
             <AppBar position="static">
                 <Toolbar>
-                    <IconButton aria-controls="menu-top" aria-hidden="false" aria-haspopup="false" onClick={handleClick}
-                                edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
-                        <MenuIcon/>
-                    </IconButton>
-                    <Typography variant="h6" className={classes.title}>
+
+                    <Button component={Link} to="/" color={"primary"}
+                            variant={"text"} className={classes.menuButton}>Home</Button>
+                    <Button component={Link} to="/issues/" color={"primary"}
+                            variant={"text"} className={classes.menuButton}>Issues</Button>
+                    <Button component={Link} to="/terms/" color={"primary"}
+                            variant={"text"} className={classes.menuButton}>Terms</Button>
+                    <Button component={Link} to="/logout/" color={"primary"}
+                            variant={"text"} className={classes.menuButton}>Log out</Button>
+
+                    <Typography variant="h6" className={classes.title} align={"right"}>
                         {username}@ISP.CP
                     </Typography>
-                    <Menu id={"menu-top"} anchorEl={anchorEl}
-                          keepMounted
-                          open={Boolean(anchorEl)}
-                          onClose={handleClose}>
-                        <MenuItem key={"tm-1"}><Button component={Link} to="/" color={"primary"}
-                                                       variant={"contained"}>Home</Button></MenuItem>
-                        <MenuItem key={"tm-2"}><Button component={Link} to="/issues/" color={"primary"}
-                                                       variant={"contained"}>Issues</Button></MenuItem>
-                        <MenuItem key={"tm-3"}><Button component={Link} to="/terms/" color={"primary"}
-                                                       variant={"contained"}>Terms</Button></MenuItem>
-                        <MenuItem key={"tm-4"}><Button component={Link} to="/logout/" color={"primary"}
-                                                       variant={"contained"}>Log out</Button></MenuItem>
-                    </Menu>
                 </Toolbar>
             </AppBar>
             <Route path="/issues" component={Issues}/>

@@ -9,6 +9,9 @@ import TextField from "@material-ui/core/TextField";
 import {makeStyles, NativeSelect} from "@material-ui/core";
 import IspCpHelper from "../IspCpHelper";
 import ChainedList from "./ChainedList";
+import IssueStatus from "../models/IssueStatus";
+
+const dateformat = require("dateformat");
 
 const formStyles = makeStyles(theme => ({
     modal: {
@@ -35,7 +38,7 @@ export default function IssueForm(props) {
     const [homes, setHomes] = React.useState([]);
     const [flats, setFlats] = React.useState([]);
     const [engineers, setEngineers] = React.useState([])
-    const [engineer, setEngineer] = React.useState({id:0,title:''});
+    const [engineer, setEngineer] = React.useState({id: 0, title: ''});
 
     const afterReport = props.afterReport;
 
@@ -49,16 +52,17 @@ export default function IssueForm(props) {
 
     const reportIssue = (event) => {
         event.preventDefault();
-
-        let issue = Object.assign({address: address}, {engineer: engineer}, {comment: event.target.comment_new.value});
+        let issue = Object.assign(
+            {address: address},
+            {engineer: engineer},
+            {comment: event.target.comment_new.value},
+            {report_status: new IssueStatus()},
+            {execution_date: new Date(event.target.execution_date.value).getTime()/1000}
+        );
+        Object.assign(issue, {history: [JSON.stringify(issue)]});
         let url = "/issues/report/";
-        new IspCpHelper().callApi(url,{
-            params: {
-                email: axios.defaults.params.email,
-                password: axios.defaults.params.password,
-                comment: issue
-            }
-        }, ()=>{handleClose();afterReport();});
+        IspCpHelper.callApi(url, {comment: issue}).then(afterReport);
+        handleClose();
     }
 
     const onChangeAddress = (event) => {
@@ -71,7 +75,7 @@ export default function IssueForm(props) {
                     id: event.target.value
                 };
                 address_new.city.title = event.target.selectedOptions.item(0).text;
-                new IspCpHelper().callApi("/term/" + address_new.city.id,null, (response) => {
+                IspCpHelper.callApi("/term/" + address_new.city.id).then((response) => {
                     setStreets(response.data.term.children || [])
                 });
                 break;
@@ -80,7 +84,7 @@ export default function IssueForm(props) {
                     title: event.target.selectedOptions.item(0).text,
                     id: event.target.value
                 };
-                new IspCpHelper().callApi("/term/" + address_new.street.id,null, (response) => {
+                IspCpHelper.callApi("/term/" + address_new.street.id).then((response) => {
                     setHomes(response.data.term.children || [])
                 });
                 break;
@@ -89,7 +93,7 @@ export default function IssueForm(props) {
                     title: event.target.selectedOptions.item(0).text,
                     id: event.target.value
                 };
-                new IspCpHelper().callApi("/term/" + address_new.home.id,null, (response) => {
+                IspCpHelper.callApi("/term/" + address_new.home.id).then((response) => {
                     setFlats(response.data.term.children || [])
                 });
                 break;
@@ -111,17 +115,18 @@ export default function IssueForm(props) {
     }
 
     if (cities.length === 0) {
-        new IspCpHelper().callApi("/terms/" + slugify("Адреса"),null, (response) => {
+        IspCpHelper.callApi("/terms/" + slugify("Адреса")).then((response) => {
             setCities(response.data.terms)
         });
     }
 
     if (engineers.length === 0) {
-        new IspCpHelper().callApi("/terms/" + slugify("Монтажники"),null, (response) => {
+        IspCpHelper.callApi("/terms/" + slugify("Монтажники")).then((response) => {
             setEngineers(response.data.terms)
         });
     }
 
+    const execution_date = undefined;
     return (
         <div>
             <Button onClick={handleOpen} color="secondary" variant={"outlined"}>REPORT</Button>
@@ -141,7 +146,8 @@ export default function IssueForm(props) {
                                      onChange={onChangeAddress} id={"city-new"}/>
                         <ChainedList root_title="Улица" value={address.street.id} children={streets}
                                      onChange={onChangeAddress} id={"street-new"}/>
-                        <ChainedList root_title="Дом" value={address.home.id} children={homes} onChange={onChangeAddress}
+                        <ChainedList root_title="Дом" value={address.home.id} children={homes}
+                                     onChange={onChangeAddress}
                                      id={"home-new"}/>
                         <ChainedList root_title="Квартира" value={address.flat.id} children={flats}
                                      onChange={onChangeAddress} id={"flat-new"}/>
@@ -151,11 +157,24 @@ export default function IssueForm(props) {
                             <option value={0}>Монтажник</option>
                             {
                                 engineers.map(item => {
-                                    return(<option key={"engineer-id-" + item.id} value={item.id}>{item.title}</option>)
+                                    return (
+                                        <option key={"engineer-id-" + item.id} value={item.id}>{item.title}</option>)
                                 })
                             }
                         </NativeSelect>
                     </Box>
+                    <Box component={"p"}/>
+                    <TextField
+                        id="date"
+                        label="Дата выполнения"
+                        type="date"
+                        name={"execution_date"}
+                        defaultValue={execution_date}
+                        className={classes.textField}
+                        InputLabelProps={{
+                            shrink: true,
+                        }}
+                    />
                     <Box component={"div"}>
                         <TextField
                             label="Комментарий"

@@ -16,7 +16,11 @@
     "react-scripts": "3.1.1",
     "react-serialize": "^0.2.0",
     "transliteration": "^2.1.7",
-    "typescript": "^3.6.3"
+    "typescript": "^3.6.3",
+    "dateformat": "^3.0.3"
+  },
+  "devDependencies": {
+    "is-json": "^2.0.1"
   },
   "scripts": {
     "start": "react-scripts start",

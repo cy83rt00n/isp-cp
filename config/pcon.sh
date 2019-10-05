@@ -14,7 +14,15 @@ yarn)
   docker-compose exec react yarn $2 $3
   ;;
 build-prod)
+  sed -sri 's/^#?(.+command:)/\1/' docker-compose.override.yml
+  find react/src/ -type f -exec readlink -f {} \; | xargs sed -i -s 's/ctn.onedext.ru/ispcp.onedext.ru/'
   rm -Rfv react/build/* && docker-compose exec react yarn build && sudo chown -Rf 33:1000 react/build/ && sudo chmod -R 774 react/build/ && git add . && git commit -m "prod build"
+  sed -sri 's/^#?(.+command:)/#\1/' docker-compose.override.yml
+  find react/src/ -type f -exec readlink -f {} \; | xargs sed -i -s 's/ispcp.onedext.ru/ctn.onedext.ru/'
+  ;;
+dev-conf)
+  sed -sri 's/^#?(.+command:)/#\1/' docker-compose.override.yml
+  find react/src/ -type f -exec readlink -f {} \; | xargs sed -is 's/ispcp.onedext.ru/ctn.onedext.ru/'
   ;;
 install)
   docker-compose exec php php app/cli.php installation

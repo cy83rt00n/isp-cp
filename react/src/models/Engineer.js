@@ -1,5 +1,6 @@
-let Engineer = {
-    id:0, title:''
+function Engineer () {
+    let id =0; let title = '';
+    return this;
 }
 
 export default Engineer;

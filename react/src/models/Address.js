@@ -1,16 +1,17 @@
-let Address = {
-    city : {
+function Address(){
+    let city = {
         id:0, title:''
-    },
-    street: {
+    };
+    let street = {
         id:0, title:''
-    },
-    home: {
-        id:0, title:''
-    },
-    flat: {
+    };
+    let home = {
         id:0, title:''
     }
+    let flat = {
+        id:0, title:''
+    };
+    return this;
 }
 
 export default Address;

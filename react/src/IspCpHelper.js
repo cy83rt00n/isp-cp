@@ -1,7 +1,7 @@
 import axios from "axios";
 import IspCpConfig from "./IspCpConfig";
 
-export default class IspCpHelper {
+class IspCpHelper {
     getUriParams() {
         let params = window.location.search.substr(1).split("&");
         console.log(params);
@@ -12,11 +12,16 @@ export default class IspCpHelper {
         return pairs;
     }
 
-    callApi = (url,params, callback) => {
-        let config = params || {params:axios.defaults.params};
-        axios.get(IspCpConfig.ApiRequest(url), config)
-            .then(
-                response =>  { callback(response) }
-            )
+    callApi = (url,params) => {
+        let config = {params:Object.assign(axios.defaults.params,params)};
+        return axios.get(IspCpConfig.ApiRequest(url), config);
+    }
+
+    debug = (message) => {
+        if (window.location.host.startsWith('ctn.')) {
+            console.log(message);
+        }
     }
 }
+
+export default new IspCpHelper();

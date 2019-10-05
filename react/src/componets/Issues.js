@@ -1,31 +1,27 @@
 import React from 'react';
-import axios from 'axios';
-import IspCpConfig from "../IspCpConfig";
 import Button from "@material-ui/core/Button";
 import Paper from "@material-ui/core/Paper";
 import ButtonGroup from "@material-ui/core/ButtonGroup";
 import TextField from '@material-ui/core/TextField';
-import ListItem from "@material-ui/core/ListItem";
 import Table from '@material-ui/core/Table';
 import TableBody from '@material-ui/core/TableBody';
 import TableCell from '@material-ui/core/TableCell';
 import TableHead from '@material-ui/core/TableHead';
 import TableRow from '@material-ui/core/TableRow';
 import {slugify} from 'transliteration';
-import Modal from '@material-ui/core/Modal';
-import {makeStyles} from '@material-ui/core/styles';
-import Box from "@material-ui/core/Box";
-import {ListItemText} from "@material-ui/core";
-import NativeSelect from "@material-ui/core/NativeSelect";
-import {serialize} from "react-serialize";
 import IspCpHelper from "../IspCpHelper";
 import IssueForm from "./IssueForm";
-import Address from "../models/Address";
-import Engineer from "../models/Engineer";
 
-var he = require('he');
+import Issue from "../models/Issue";
+import IssueStatusSelect from "./IssueStatusSelect";
+import IssueStatus from "../models/IssueStatus";
+import IssueUpdateReport from "../models/IssueUpdateReport";
+import IssueHistory from "./IssueHistory";
+import Box from "@material-ui/core/Box";
 
-var issusesInstance;
+const HTMLEntity = require("html-entities");
+const IsJSON = require("is-json");
+const dateformat = require("dateformat");
 
 export default class Issues extends React.Component {
     updateTimeout = 10000;
@@ -35,99 +31,148 @@ export default class Issues extends React.Component {
         super(props);
         this.state = {
             success: false,
-            data: []
+            data: [],
+            issues: [],
         };
-        this.ispcpHelper = new IspCpHelper();
-        this.passState = this.passState.bind(this);
-        this.handleSubmit = this.handleSubmit.bind(this);
-        this.componentDidMount = this.componentDidMount.bind(this);
-        this.callUpdate = this.callUpdate.bind(this);
-        issusesInstance = this;
+        this.getList();
     }
 
-    callUpdate() {
-        this.componentDidMount();
-    }
-
-    handleSubmit(event) {
-        event.preventDefault();
-        console.log(event.currentTarget);
-        window.Target = event.currentTarget;
-
-        if (event.currentTarget.dataset.update) {
-            // var issueForm = document.querySelector("form#issue-edit-" + event.currentTarget.dataset.update);
-            console.log("Udate " + event.currentTarget.dataset.update);
-            // window.issueForm = issueForm;
-            const comment = document.querySelector("#comment-" + event.currentTarget.dataset.update).value;
-            this.updateIssue(event.currentTarget.dataset.update, comment);
-        }
-        if (event.currentTarget.dataset.resolve) {
-            // var issueForm = document.querySelector("form#issue-edit-" + event.currentTarget.dataset.resolve);
-            console.log("Resolve " + event.currentTarget.dataset.resolve);
-            this.resolveIssue(event.currentTarget.dataset.resolve);
-        }
-    }
-
-    resolveIssue(id) {
-        new IspCpHelper().callApi("/issues/resolve/" + id, null, this.componentDidMount);
-    }
-
-    updateIssue(id, comment) {
-        let report = {
-            address: Address,
-            engineer: Engineer,
-            comment: comment
-        };
-        new IspCpHelper().callApi("/issues/update/" + id + "?comment=" + JSON.stringify(report), null, this.componentDidMount);
-    }
-
-
-    componentDidMount() {
+    getList = () => {
+        IspCpHelper.debug("get list action");
         let apiPath = "/issues/";
         let location = this.props.location.pathname;
         if (location.startsWith("/issues/") && location.length > "/issues/".length) {
             apiPath = location;
         }
-        new IspCpHelper().callApi(apiPath, null, this.passState);
+        IspCpHelper.callApi(apiPath).then(this.passState);
     }
 
     passState = (response) => {
-        response.data.index = JSON.parse(response.data.index);
-        console.log(response.data.index);
-        response.data.index.map(async (issue) => {
-            const decoded = he.decode(issue.comment);
-            console.log(decoded)
-            issue.comment = {
-                address: Address,
-                engineer: Engineer,
-                comment: ''
-            };
+        IspCpHelper.debug("passing state to component");
+        IspCpHelper.debug(response);
+
+        var index = JSON.parse(response.data.index);
+
+        index.map((index_entry, index_key) => {
             try {
-                const parsed = JSON.parse(decoded);
-                if (typeof(parsed)==="object") {
-                    issue.comment = parsed
+                let issue = Object.assign(new Issue(),index_entry);
+                let comment = JSON.parse(HTMLEntity.AllHtmlEntities.decode(index_entry.comment));
+
+                if (typeof comment === "object") {
+                    issue = Object.assign(issue, comment);
                 } else {
-                    issue.comment.comment = parsed
+                    issue.comment = comment;
                 }
+
+                issue.report_ts = issue.report_date || issue.report_ts;
+                issue.resolve_ts = issue.resolve_date || issue.report_ts;
+                issue.exec_ts = issue.execution_date || issue.exec_ts;
+                issue.report_status = Object.assign(new IssueStatus(),issue.report_status);
+                issue.history = issue.history || [];
+
+                Object.assign(index[index_key],issue);
+
             } catch (e) {
-                issue.comment.comment = JSON.parse(decoded);
-            }
-        })
-        console.log(response.data.index);
-        this.setState(() => {
-            return {
-                success: response.data.success,
-                data: response.data.index
+                IspCpHelper.debug(e);
             }
         });
 
+        this.setState(
+            {
+                success: response.data.success,
+                data: index,
+                issues: index
+            });
+
     };
+
+    handleSubmit = (event) => {
+        event.preventDefault();
+        IspCpHelper.debug(event.currentTarget);
+
+        if (event.currentTarget.dataset.update) {
+            IspCpHelper.debug(event.currentTarget.dataset.update);
+
+            const issue = this.state.issues.find(index_entry=>{
+                return index_entry.id == event.currentTarget.dataset.update
+            });
+
+            let history = issue.history || [];
+            let report = {
+                address: issue.address,
+                engineer: issue.engineer,
+                comment: issue.comment,
+                report_status: issue.report_status,
+                execution_date: (typeof issue.execution_date === "string")?new Date(issue.execution_date).getTime()/1000:issue.execution_date
+            };
+            Object.assign(report,{history:history.concat(JSON.stringify(report))});
+            IspCpHelper.debug(report);
+            this.updateIssue(event.currentTarget.dataset.update, report);
+        }
+        if (event.currentTarget.dataset.resolve) {
+            IspCpHelper.debug("Resolve " + event.currentTarget.dataset.resolve);
+            this.resolveIssue(event.currentTarget.dataset.resolve);
+        }
+    }
+
+    resolveIssue = (id) => {
+        IspCpHelper.callApi("/issues/resolve/" + id).then(this.getList);
+    }
+
+    updateIssue(id, report) {
+        const data = {
+            comment: JSON.stringify(report)
+        }
+        IspCpHelper.callApi("/issues/update/" + id,data ).then(this.getList);
+    }
+
+    onStatusSelect = (event) => {
+        IspCpHelper.debug(event.target.value);
+        IspCpHelper.debug(event.target.dataset);
+        const issue = this.state.issues.find(index_entry=>{
+            return index_entry.id === event.target.dataset.issue_id
+        });
+        let report_status = new IssueStatus();
+        let report = new IssueUpdateReport();
+        let history = issue.history || [];
+        report.address = issue.address;
+        report.engineer = issue.engineer;
+        report.comment = issue.comment;
+        report.execution_date = (typeof issue.execution_date === "string")?new Date(issue.execution_date).getTime()/1000:issue.execution_date;
+        report_status.id = event.target.value;
+        report_status.title= event.target.selectedOptions.item(0).text;
+        IspCpHelper.debug(report_status);
+        report.report_status = report_status;
+        IspCpHelper.debug(report);
+        Object.assign(report,{history:history.concat(JSON.stringify(report))});
+        this.updateIssue(issue.id,report);
+    }
+
+    onCommentTextChange = (event) => {
+        IspCpHelper.debug(event.target.value);
+        IspCpHelper.debug(event.target.dataset.issue_id);
+        const issue = this.state.issues.find(index_entry=>{
+            return index_entry.id === event.target.dataset.issue_id
+        });
+        issue.comment = event.target.value;
+    }
+
+    onChangeExecutionDate = (event) => {
+        IspCpHelper.debug(event.target.value)
+        IspCpHelper.debug(new Date(event.target.value).getTime()/1000)
+        IspCpHelper.debug(event.target.dataset.issue_id);
+        const issue = this.state.issues.find(index_entry=>{
+            return index_entry.id === event.target.dataset.issue_id
+        });
+        issue.execution_date= new Date(event.target.value).getTime()/1000;
+    }
 
 
     render() {
+        IspCpHelper.debug("component render");
         if (this.state.success) {
-            const data = this.state.data;
-            // setTimeout(this.componentDidMount, this.updateTimeout);
+            const index = this.state.issues;
+            IspCpHelper.debug(index);
             return (
                 <Paper>
                     <Table>
@@ -136,56 +181,95 @@ export default class Issues extends React.Component {
                                 <TableCell>Issue</TableCell>
                                 <TableCell>Reported </TableCell>
                                 <TableCell>Resolved</TableCell>
+                                <TableCell>Status</TableCell>
                                 <TableCell>Address</TableCell>
                                 <TableCell>Engineer</TableCell>
+                                <TableCell>Execution date</TableCell>
                                 <TableCell>Comment</TableCell>
+                                <TableCell>Action</TableCell>
                                 <TableCell>
-                                    <IssueForm afterReport={this.callUpdate}/>
+                                    <IssueForm afterReport={this.getList}/>
                                 </TableCell>
                             </TableRow>
                         </TableHead>
-                        <TableBody>{data.map(issue =>
-                            <TableRow key={"issue-" + issue.id}>
-                                <TableCell>{issue.id}</TableCell>
-                                <TableCell>{new Date(parseInt(issue.report_date) * 1000).toLocaleDateString()}</TableCell>
-                                <TableCell>
-                                    {
-                                        (issue.resolve_date > 0)
-                                            ? new Date(parseInt(issue.resolve_date) * 1000).toLocaleDateString()
-                                            : ''
-                                    }
-                                </TableCell>
-                                <TableCell>
-                                    {issue.comment.address.city.title} /
-                                    {issue.comment.address.street.title} /
-                                    {issue.comment.address.home.title} /
-                                    {issue.comment.address.flat.title}
-                                </TableCell>
-                                <TableCell>
-                                    {issue.comment.engineer.title}
-                                </TableCell>
-                                <TableCell>
+                        <TableBody>{index.map((index_entry, index_key) => {
+                            const execution_date = () => {
+                                if (index_entry.execution_date == undefined || index_entry.execution_date == "") {
+                                    return undefined;
+                                } else {
+                                    let date = new Date(index_entry.execution_date * 1000);
+                                    return dateformat(date,"yyyy-mm-dd");
+                                }
+                            }
+                            IspCpHelper.debug(execution_date());
+                            return (
+                                <TableRow key={"index-issues-key-" + index_key}>
+                                    <TableCell>{index_entry.id}</TableCell>
+                                    <TableCell>{new Date(parseInt(index_entry.report_ts) * 1000).toLocaleDateString()}</TableCell>
+                                    <TableCell>
+                                        {
+                                            (index_entry.resolve_date > 0)
+                                                ? new Date(parseInt(index_entry.resolve_ts) * 1000).toLocaleDateString()
+                                                : ''
+                                        }
+                                    </TableCell>
+                                    <TableCell>
+                                        <IssueStatusSelect issue={index[index_key]} issuse_index_key={index_key}
+                                                           defaultValue={index_entry.report_status.id}
+                                                           onChange={this.onStatusSelect}/>
+                                    </TableCell>
+                                    <TableCell>
+                                        {index_entry.address.city.title} /
+                                        {index_entry.address.street.title} /
+                                        {index_entry.address.home.title} /
+                                        {index_entry.address.flat.title}
+                                    </TableCell>
+                                    <TableCell>
+                                        {index_entry.engineer.title}
+                                    </TableCell>
+                                    <TableCell>
                                     <TextField
-                                        label="Комментарий"
-                                        id={"comment-" + issue.id}
-                                        defaultValue={issue.comment.comment}
-                                        margin="normal"
-                                        variant="outlined"
-                                    /></TableCell>
-                                <TableCell>
-                                    <ButtonGroup size="small">
-                                        <Button type="button" onClick={this.handleSubmit} data-update={issue.id}
-                                                color="primary">
-                                            UPDATE
-                                        </Button>
-                                        <Button type="button" onClick={this.handleSubmit} data-resolve={issue.id}
-                                                color="secondary">
-                                            RESOLVE
-                                        </Button>
-                                    </ButtonGroup>
-                                </TableCell>
-                            </TableRow>
-                        )}
+                                        id="date"
+                                        label="Дата выполнения"
+                                        type="date"
+                                        name={"execution_date"}
+                                        defaultValue={execution_date()}
+                                        InputLabelProps={{
+                                            shrink: true,
+                                        }}
+                                        onChange={this.onChangeExecutionDate}
+                                        inputProps={{"data-issue_id":index_entry.id}}
+                                    />
+                                    </TableCell>
+                                    <TableCell>
+                                        <TextField
+                                            label="Комментарий"
+                                            id={"comment-" + index_entry.id}
+                                            defaultValue={index_entry.comment}
+                                            margin="normal"
+                                            variant="outlined"
+                                            onChange={this.onCommentTextChange}
+                                            inputProps={{"data-issue_id":index_entry.id}}
+                                        /></TableCell>
+                                    <TableCell>
+                                        <ButtonGroup size="small">
+                                            <Button type="button" onClick={this.handleSubmit} data-update={index_entry.id}
+                                                    color="primary">
+                                                UPDATE
+                                            </Button>
+                                            <Button type="button" onClick={this.handleSubmit} data-resolve={index_entry.id}
+                                                    color="secondary">
+                                                RESOLVE
+                                            </Button>
+                                        </ButtonGroup>
+                                    </TableCell>
+                                    <TableCell>
+                                        <IssueHistory issue_id={index_entry.id} history={index_entry.history}/>
+                                    </TableCell>
+                                </TableRow>
+                            );
+                        })
+                        }
                         </TableBody>
                     </Table>
                 </Paper>
