@@ -18,7 +18,7 @@ class IspCpHelper {
     }
 
     debug = (message) => {
-        if (window.location.host == 'ctn.onedext.ru') {
+        if (window.location.host == 'ispcp.onedext.ru') {
             console.log(message);
         }
     }
