@@ -12,6 +12,11 @@ class IssuesController extends ControllerBase
          * Locals
          */
         $index = null;
+        $response = [
+        	"success" => false,
+	        "allowed" => false,
+	        "index" => []
+        ];
 
 
         /**
@@ -24,7 +29,19 @@ class IssuesController extends ControllerBase
          * Granting access
          */
         if ($allowed) {
-            $index = Issue::find(["columns" => "id,report_date,resolve_date,comment"]);
+        	$response["allowed"] = true;
+            $index = Issue::find(["columns" => "id,report_date,resolve_date,reporter,resolver,comment"]);
+            $response["success"] = boolval($index);
+            $index->rewind();
+            while($index->valid()) {
+            	$item = $index->current();
+	            $reporter = User::findFirst($item->reporter);
+	            $resolver = User::findFirst($item->resolver);
+	            $item->writeAttribute("reporter",($reporter)?$reporter->login:'unknown@isp.cp');
+	            $item->writeAttribute("resolver",($resolver)?$resolver->login:'unknown@isp.cp');
+	            $response["index"][] = $item;
+	            $index->next();
+            }
         }
 
         /**
@@ -32,11 +49,7 @@ class IssuesController extends ControllerBase
          */
         $this->response
             ->setContent(
-                json_encode([
-                    "success" => boolval($index),
-                    "index" => json_encode($index),
-                    "allowed" => $allowed
-                ])
+                json_encode($response)
             )
             ->send();
     }
@@ -68,6 +81,10 @@ class IssuesController extends ControllerBase
          */
         if ($allowed) {
             $item = Issue::findFirst($itemID);
+            $reporter = User::findFirst($item->reporter);
+            $resolver = User::findFirst($item->resolver);
+            $item->reporter = ($reporter)?$reporter->login:'unknown@isp.cp';
+            $item->resolver = ($resolver)?$resolver->login:'unknown@isp.cp';
         }
 
         /**
@@ -88,6 +105,11 @@ class IssuesController extends ControllerBase
      */
     public function report()
     {
+
+	    /**
+	     * Checking access
+	     */
+	    $allowed = $this->isAllowed(__FUNCTION__);
         /**
          * Locals
          */
@@ -97,11 +119,6 @@ class IssuesController extends ControllerBase
          * Externals
          */
         $userID = $this->currentUserId();
-
-        /**
-         * Checking access
-         */
-        $allowed = $this->isAllowed(__FUNCTION__);
 
         /**
          * Granting access

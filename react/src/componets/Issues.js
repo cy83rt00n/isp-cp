@@ -51,7 +51,7 @@ export default class Issues extends React.Component {
         IspCpHelper.debug("passing state to component");
         IspCpHelper.debug(response);
 
-        var index = JSON.parse(response.data.index);
+        var index = response.data.index;
 
         index.map((index_entry, index_key) => {
             try {
@@ -172,6 +172,7 @@ export default class Issues extends React.Component {
         IspCpHelper.debug("component render");
         if (this.state.success) {
             const index = this.state.issues;
+
             IspCpHelper.debug(index);
             return (
                 <Paper>
@@ -205,7 +206,14 @@ export default class Issues extends React.Component {
                             return (
                                 <TableRow key={"index-issues-key-" + index_key}>
                                     <TableCell>{index_entry.id}</TableCell>
-                                    <TableCell>{new Date(parseInt(index_entry.report_ts) * 1000).toLocaleDateString()}</TableCell>
+                                    <TableCell>
+                                        <Box component={"div"}>
+                                        {new Date(parseInt(index_entry.report_ts) * 1000).toLocaleDateString()}
+                                        </Box>
+                                        <Box component={"div"}>
+                                            by {index_entry.reporter.split("@")[0]}
+                                        </Box>
+                                    </TableCell>
                                     <TableCell>
                                         {
                                             (index_entry.resolve_date > 0)

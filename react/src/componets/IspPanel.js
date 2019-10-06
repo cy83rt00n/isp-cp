@@ -14,6 +14,7 @@ import {makeStyles} from "@material-ui/core";
 import MenuList from "@material-ui/core/MenuList";
 import MenuItem from "@material-ui/core/MenuItem";
 import Menu from "@material-ui/core/Menu";
+import IspCpHelper from "../IspCpHelper";
 
 export default class IspPanel extends React.Component {
 
@@ -49,6 +50,8 @@ export default class IspPanel extends React.Component {
     render() {
         if (window.location.pathname === '/logout/') {
             sessionStorage.clear();
+            IspCpHelper.debug(document.cookie);
+            IspCpHelper.callApi("/users/logout");
             window.location.href = window.location.origin;
         }
         const email = sessionStorage.getItem("email") || this.state.user.email;
@@ -64,9 +67,9 @@ export default class IspPanel extends React.Component {
             sessionStorage.setItem("password",pass);
             const username = email.split("@")[0].toUpperCase();
 
-            return ([<DefaultPanel username={username}/>]);
+            return ([<DefaultPanel key={"app-default-panel"} username={username}/>]);
         }
-        return ([<IspPanelAppBar/>, <LoginForm onSubmit={this.handleSubmitLoginForm} email={email} pass={pass}/>]);
+        return ([<IspPanelAppBar key={"app-bar"}/>, <LoginForm key={"login-form"} onSubmit={this.handleSubmitLoginForm} email={email} pass={pass}/>]);
     }
 
 }
@@ -91,10 +94,7 @@ function IspPanelAppBar(props) {
     return (
         <AppBar position="static">
             <Toolbar>
-                <IconButton edge="start" className={classes.menuButton} color="inherit" aria-label="menu">
-                    <MenuIcon/>
-                </IconButton>
-                <Typography variant="h6" className={classes.title}>
+                <Typography variant="h6" align={"right"} className={classes.title}>
                     {username}@ISP.CP
                 </Typography>
             </Toolbar>
