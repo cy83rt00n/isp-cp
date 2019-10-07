@@ -112,6 +112,25 @@ export default class Issues extends React.Component {
             this.updateIssue(event.currentTarget.dataset.update, report);
         }
         if (event.currentTarget.dataset.resolve) {
+            IspCpHelper.debug(event.currentTarget.dataset. resolve);
+
+            const issue = this.state.issues.find(index_entry=>{
+                return index_entry.id == event.currentTarget.dataset.resolve
+            });
+
+            let history = issue.history || [];
+            let report = {
+                address: issue.address,
+                engineer: issue.engineer,
+                comment: issue.comment,
+                report_status: {"id":"31","title":"Решена"},
+                execution_date: (typeof issue.execution_date === "string")?new Date(issue.execution_date).getTime()/1000:issue.execution_date,
+                contacts: issue.contacts
+            };
+            Object.assign(report,{history:history.concat(JSON.stringify(report))});
+            IspCpHelper.debug(report);
+            this.updateIssue(event.currentTarget.dataset.resolve, report);
+
             IspCpHelper.debug("Resolve " + event.currentTarget.dataset.resolve);
             this.resolveIssue(event.currentTarget.dataset.resolve);
         }
@@ -134,6 +153,10 @@ export default class Issues extends React.Component {
         const issue = this.state.issues.find(index_entry=>{
             return index_entry.id === event.target.dataset.issue_id
         });
+        if (event.target.value == 31) {
+            this.handleSubmit({currentTarget:{dataset:{update:false,resolve:event.target.dataset.issue_id}}, preventDefault:()=>{}});
+            return;
+        }
         let report_status = new IssueStatus();
         let report = new IssueUpdateReport();
         let history = issue.history || [];

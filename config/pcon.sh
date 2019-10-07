@@ -22,7 +22,7 @@ build-prod)
   ;;
 dev-conf)
   sed -sri 's/^#?(.+command:)/#\1/' docker-compose.override.yml
-  find react/src/ -type f -exec readlink -f {} \; | xargs sed -is 's/ispcp.onedext.ru/ctn.onedext.ru/'
+  find react/src/ -type f -exec readlink -f {} \; | xargs sed -si 's/ispcp.onedext.ru/ctn.onedext.ru/'
   ;;
 install)
   docker-compose exec php php app/cli.php installation
