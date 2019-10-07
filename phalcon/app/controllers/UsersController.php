@@ -186,6 +186,28 @@ class UsersController extends ControllerBase
             ->send();
     }
 
+    public function logout()
+    {
+	    /**
+	     * Checking permissions
+	     */
+	    $allowed = $this->isAllowed(__FUNCTION__);
+
+        $success = $this->session->destroy();
+
+        /**
+         * Building response.
+         */
+
+
+        $this->response->setContent(
+            json_encode([
+                "success" => boolval($success)
+            ])
+        )
+            ->send();
+    }
+
     public function delete()
     {
         /**

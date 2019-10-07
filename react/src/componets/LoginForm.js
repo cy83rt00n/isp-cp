@@ -10,7 +10,7 @@ import CardActions from "@material-ui/core/CardActions";
 
 const useStyles = makeStyles({
     card: {
-        minWidth: 275,
+        minwidth: 275,
     },
     bullet: {
         display: 'inline-block',
@@ -34,8 +34,8 @@ export default function LoginForm(props) {
 
     return (
         <Container className={classes.cardContainer} maxWidth={"sm"}>
-            <Card className={classes.card} maxWidth={"md"} component={"form"} onSubmit={props.onSubmit}>
-                <CardContent>
+            <Card className={classes.card} component={"form"} onSubmit={props.onSubmit}>
+                <CardContent >
                     <Box component={"div"}>
                         <TextField type={"email"} name={"email"} placeholder={"Login"} defaultValue={props.email}/>
                     </Box>

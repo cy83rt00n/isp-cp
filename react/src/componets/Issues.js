@@ -11,6 +11,7 @@ import TableRow from '@material-ui/core/TableRow';
 import {slugify} from 'transliteration';
 import IspCpHelper from "../IspCpHelper";
 import IssueForm from "./IssueForm";
+import Chip from "@material-ui/core/Chip";
 
 import Issue from "../models/Issue";
 import IssueStatusSelect from "./IssueStatusSelect";
@@ -51,7 +52,7 @@ export default class Issues extends React.Component {
         IspCpHelper.debug("passing state to component");
         IspCpHelper.debug(response);
 
-        var index = JSON.parse(response.data.index);
+        var index = response.data.index;
 
         index.map((index_entry, index_key) => {
             try {
@@ -103,7 +104,8 @@ export default class Issues extends React.Component {
                 engineer: issue.engineer,
                 comment: issue.comment,
                 report_status: issue.report_status,
-                execution_date: (typeof issue.execution_date === "string")?new Date(issue.execution_date).getTime()/1000:issue.execution_date
+                execution_date: (typeof issue.execution_date === "string")?new Date(issue.execution_date).getTime()/1000:issue.execution_date,
+                contacts: issue.contacts
             };
             Object.assign(report,{history:history.concat(JSON.stringify(report))});
             IspCpHelper.debug(report);
@@ -143,6 +145,7 @@ export default class Issues extends React.Component {
         report_status.title= event.target.selectedOptions.item(0).text;
         IspCpHelper.debug(report_status);
         report.report_status = report_status;
+        report.contacts = issue.contacts;
         IspCpHelper.debug(report);
         Object.assign(report,{history:history.concat(JSON.stringify(report))});
         this.updateIssue(issue.id,report);
@@ -172,21 +175,15 @@ export default class Issues extends React.Component {
         IspCpHelper.debug("component render");
         if (this.state.success) {
             const index = this.state.issues;
+
             IspCpHelper.debug(index);
             return (
                 <Paper>
                     <Table>
                         <TableHead>
                             <TableRow>
-                                <TableCell>Issue</TableCell>
-                                <TableCell>Reported </TableCell>
-                                <TableCell>Resolved</TableCell>
-                                <TableCell>Status</TableCell>
-                                <TableCell>Address</TableCell>
-                                <TableCell>Engineer</TableCell>
-                                <TableCell>Execution date</TableCell>
-                                <TableCell>Comment</TableCell>
-                                <TableCell>Action</TableCell>
+                                <TableCell></TableCell>
+                                <TableCell></TableCell>
                                 <TableCell>
                                     <IssueForm afterReport={this.getList}/>
                                 </TableCell>
@@ -201,33 +198,48 @@ export default class Issues extends React.Component {
                                     return dateformat(date,"yyyy-mm-dd");
                                 }
                             }
+                            const resolved = () => {
+                                if(index_entry.resolve_date > 0) {
+                                    const rd = new Date(parseInt(index_entry.resolve_ts) * 1000).toLocaleDateString();
+                                    return (
+                                        <Chip
+                                            size={"medium"}
+                                            label={"Выполнена: " + rd}
+                                            color="secondary"
+                                        />
+                                    )
+                                }
+                                return('');
+                            }
+
                             IspCpHelper.debug(execution_date());
                             return (
                                 <TableRow key={"index-issues-key-" + index_key}>
-                                    <TableCell>{index_entry.id}</TableCell>
-                                    <TableCell>{new Date(parseInt(index_entry.report_ts) * 1000).toLocaleDateString()}</TableCell>
                                     <TableCell>
-                                        {
-                                            (index_entry.resolve_date > 0)
-                                                ? new Date(parseInt(index_entry.resolve_ts) * 1000).toLocaleDateString()
-                                                : ''
-                                        }
+                                        <Box>{index_entry.id}</Box>
+                                        <Box component={"div"}>
+                                            {new Date(parseInt(index_entry.report_ts) * 1000).toLocaleDateString()}
+                                        </Box>
+                                        <Box component={"div"}>
+                                            by {index_entry.reporter.split("@")[0]}
+                                        </Box>
+                                        <Box>
+                                            {resolved()}
+                                        </Box>
+                                        <Box>
+                                            {index_entry.address.city.title} /
+                                            {index_entry.address.street.title} /
+                                            {index_entry.address.home.title} /
+                                            {index_entry.address.flat.title}
+                                        </Box>
+                                        <Box>
+                                            Контакты: {index_entry.contacts||""}
+                                        </Box>
                                     </TableCell>
                                     <TableCell>
                                         <IssueStatusSelect issue={index[index_key]} issuse_index_key={index_key}
                                                            defaultValue={index_entry.report_status.id}
                                                            onChange={this.onStatusSelect}/>
-                                    </TableCell>
-                                    <TableCell>
-                                        {index_entry.address.city.title} /
-                                        {index_entry.address.street.title} /
-                                        {index_entry.address.home.title} /
-                                        {index_entry.address.flat.title}
-                                    </TableCell>
-                                    <TableCell>
-                                        {index_entry.engineer.title}
-                                    </TableCell>
-                                    <TableCell>
                                     <TextField
                                         id="date"
                                         label="Дата выполнения"
@@ -239,9 +251,11 @@ export default class Issues extends React.Component {
                                         }}
                                         onChange={this.onChangeExecutionDate}
                                         inputProps={{"data-issue_id":index_entry.id}}
+                                        fullWidth={true}
                                     />
-                                    </TableCell>
-                                    <TableCell>
+                                        <Box>
+                                            Монтажник: {index_entry.engineer.title}
+                                        </Box>
                                         <TextField
                                             label="Комментарий"
                                             id={"comment-" + index_entry.id}
@@ -250,9 +264,13 @@ export default class Issues extends React.Component {
                                             variant="outlined"
                                             onChange={this.onCommentTextChange}
                                             inputProps={{"data-issue_id":index_entry.id}}
-                                        /></TableCell>
+                                            fullWidth={true}
+                                            rows={5}
+                                            rowsMax={5}
+                                        />
+                                    </TableCell>
                                     <TableCell>
-                                        <ButtonGroup size="small">
+                                        <ButtonGroup size="small" fullWidth={true}>
                                             <Button type="button" onClick={this.handleSubmit} data-update={index_entry.id}
                                                     color="primary">
                                                 UPDATE
@@ -262,9 +280,9 @@ export default class Issues extends React.Component {
                                                 RESOLVE
                                             </Button>
                                         </ButtonGroup>
-                                    </TableCell>
-                                    <TableCell>
+                                        <Box component={"div"} m={[0,1]}>
                                         <IssueHistory issue_id={index_entry.id} history={index_entry.history}/>
+                                        </Box>
                                     </TableCell>
                                 </TableRow>
                             );

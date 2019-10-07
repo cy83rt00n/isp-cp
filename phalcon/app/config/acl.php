@@ -12,6 +12,7 @@ use Phalcon\Events\Event;
 use Phalcon\Events\Manager as EventsManager;
 use Phalcon\Mvc\Application;
 use Phalcon\Mvc\Micro;
+use Phalcon\Session\Adapter\Files as Session;
 
 $Acl = new AclList();
 
@@ -32,7 +33,7 @@ $Terms = new Acl\Resource("Terms");
 $Acl->addResource($Terms, ["index", "item", "create", "delete", "schema"]);
 
 $Users = new Acl\Resource("Users");
-$Acl->addResource($Users, ["index", "item", "register", "login", "delete", "purge"]);
+$Acl->addResource($Users, ["index", "item", "register", "login", "logout", "delete", "purge"]);
 
 
 /**
@@ -40,6 +41,7 @@ $Acl->addResource($Users, ["index", "item", "register", "login", "delete", "purg
  */
 
 $Acl->allow("Guest", "Users", "register");
+$Acl->allow("Guest", "Users", "login");
 
 /**
  * CommonUser
@@ -52,8 +54,8 @@ $Acl->allow("Guest", "Users", "register");
 $Acl->allow("Engineer", "Issues", "index");
 $Acl->allow("Engineer", "Issues", "item");
 $Acl->allow("Engineer", "Issues", "report");
-
-$Acl->allow("Manager", "Terms", ["index","item"]);
+$Acl->allow("Engineer", "Users", "logout");
+$Acl->allow("Engineer", "Terms", ["index","item"]);
 
 /**
  * Manager inherits Engineer.
@@ -121,6 +123,20 @@ class AclHelper
 
     public static function currentUserRole($DI)
     {
+	    $DI->setShared(
+		    'session',
+		    function () {
+			    $session = new Session();
+
+			    $session->start();
+
+			    return $session;
+		    }
+	    );
+
+	    if ($DI->get("session")->has("userId") && $DI->get("session")->get("role")) {
+		    return $DI->get("session")->get("role");
+	    }
         /**
          * Is it for registration
          */
@@ -148,8 +164,8 @@ class AclHelper
          */
 
         if ($response["success"]) {
-            $_GET["role"] = AclHelper::$roles[$response["item"]->roleId];
-            $_GET["userId"] = $response["item"]->id;
+            $DI->get("session")->set("userId",$response["item"]->id);
+            $DI->get("session")->set("role",AclHelper::$roles[$response["item"]->roleId]);
             return self::$roles[$response["item"]->roleId];
         }
         return "Guest";

@@ -40,7 +40,7 @@ export default function DefaultPanel(props) {
         setAnchorEl(null);
     };
     return ([
-        <Router>
+        <Router key={"app-router"}>
             <AppBar position="static">
                 <Toolbar>
 

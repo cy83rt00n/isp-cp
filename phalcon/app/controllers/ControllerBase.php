@@ -20,7 +20,12 @@ class ControllerBase extends Controller
 
     protected function currentUserId()
     {
-        return $this->getDI()->getRequest()->get("userId", "absint", 0);
+    	if ($this->getDI()->get("session")->has("userId"))
+	    {
+		    return $this->getDI()->get("session")->get("userId");
+	    }
+
+    	return 0;
     }
 
 }

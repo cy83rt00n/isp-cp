@@ -5,6 +5,13 @@ class TermsController extends ControllerBase
 
     public function index($parent = 0)
     {
+
+
+	    /**
+	     * Checking access
+	     */
+	    $allowed = $this->isAllowed(__FUNCTION__);
+
         /**
          * Locals
          */
@@ -27,12 +34,6 @@ class TermsController extends ControllerBase
             $slug = $this->filter->sanitize($parent, "string", false);
             $filter = ["slug=:slug:", "bind" => ["slug" => $slug]];
         }
-
-
-        /**
-         * Checking access
-         */
-        $allowed = $this->isAllowed(__FUNCTION__);
 
         /**
          * Gathering data
@@ -58,6 +59,11 @@ class TermsController extends ControllerBase
 
     public function item($id, $internal=false)
     {
+	    /**
+	     * Checking access
+	     */
+	    $allowed = $this->isAllowed(__FUNCTION__);
+
         /**
          * Locals
          */
@@ -69,10 +75,6 @@ class TermsController extends ControllerBase
          */
         $id = $this->filter->sanitize($id, "absint");
 
-        /**
-         * Checking access
-         */
-        $allowed = $this->isAllowed(__FUNCTION__);
 
         /**
          * Gathering data

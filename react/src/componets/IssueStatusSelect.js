@@ -14,6 +14,8 @@ import IspCpHelper from "../IspCpHelper";
 import {slugify} from "transliteration";
 import Term from "../models/Term";
 import Select from "@material-ui/core/Select";
+import {FormControl} from "@material-ui/core";
+import InputLabel from "@material-ui/core/InputLabel";
 
 
 const ch = ()=>{
@@ -39,14 +41,17 @@ function IssueStatusSelect(props)
     }
 
     return(
-        <NativeSelect inputProps={input_props} value={issue.report_status.id} onChange={props.onChange}>
-            <option key={"index-issue-statuses-" + 0} value={0}>{"Статус"}</option>
-            {statuses.map((option, index_key)=>{
-                return(
-                    <option key={"index-issue-statuses-" + (index_key+1)} value={option.id}>{option.title}</option>
-                );
-            })}
-        </NativeSelect>
+        <FormControl fullWidth={true} margin={"dense"}>
+            <InputLabel shrink={true}>Статус заявки</InputLabel>
+            <NativeSelect inputProps={input_props} value={issue.report_status.id} onChange={props.onChange}>
+                <option value={0}></option>
+                {statuses.map((option, index_key)=>{
+                    return(
+                        <option value={option.id}>{option.title}</option>
+                    );
+                })}
+            </NativeSelect>
+        </FormControl>
     );
 }
 

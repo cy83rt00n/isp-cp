@@ -37,8 +37,9 @@ export default function IssueHistory(props) {
     if (props.history.length===0) {
         return('');
     }
+    const key_prefix = "index-issue-" + props.issue_id + "history-entry-";
     return ([
-            <Button onClick={handleOpen} color="secondary" variant={"outlined"}>History</Button>,
+            <Button fullWidth={true} key={key_prefix + "button"} onClick={handleOpen} color="secondary" variant={"outlined"}>History</Button>,
             <Modal
                 aria-labelledby="transition-modal-title"
                 aria-describedby="transition-modal-description"
@@ -46,6 +47,7 @@ export default function IssueHistory(props) {
                 closeAfterTransition
                 onClose={handleClose}
                 className={classes.modal}
+                key={key_prefix + "modal"}
             >
 
                 <Box component={"div"} className={classes.paper}>

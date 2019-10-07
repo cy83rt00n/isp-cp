@@ -17,7 +17,7 @@ const theme = createMuiTheme({
     },
 });
 
-ReactDOM.render(<IspPanel theme={theme}></IspPanel>, document.getElementById('root'));
+ReactDOM.render(<IspPanel key={"application-ispcp"} theme={theme}></IspPanel>, document.getElementById('root'));
 
 // If you want your app to work offline and load faster, you can change
 // unregister() to register() below. Note this comes with some pitfalls.
