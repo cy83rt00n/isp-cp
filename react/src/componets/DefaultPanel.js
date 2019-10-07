@@ -13,6 +13,7 @@ import MenuItem from "@material-ui/core/MenuItem";
 import MenuIcon from '@material-ui/icons/Menu';
 import IspPanel from "./IspPanel";
 import Divider from '@material-ui/core/Divider';
+import Summary from "./Summary";
 
 const useStyles = makeStyles(theme => ({
     root: {
@@ -50,6 +51,8 @@ export default function DefaultPanel(props) {
                             variant={"text"} className={classes.menuButton}>Issues</Button>
                     <Button component={Link} to="/terms/" color={"primary"}
                             variant={"text"} className={classes.menuButton}>Terms</Button>
+                    <Button component={Link} to="/summary/" color={"primary"}
+                            variant={"text"} className={classes.menuButton}>Summary</Button>
                     <Button component={Link} to="/logout/" color={"primary"}
                             variant={"text"} className={classes.menuButton}>Log out</Button>
 
@@ -61,6 +64,7 @@ export default function DefaultPanel(props) {
             <Route path="/issues" component={Issues}/>
             <Route path="/terms" component={Terms}/>
             <Route path="/options" component={Options}/>
+            <Route path="/summary" component={Summary}/>
             <Route path="/logout" component={IspPanel}/>
         </Router>
     ]);

@@ -99,6 +99,15 @@ $options->get("/set/{name}/{value}", "set");
 $options->get("/get/{name}", "get");
 $app->mount($options);
 
+$options = new MicroCollection();
+$options->setHandler("SummaryController", true);
+$options->setPrefix("/api/summary");
+$options->get("/", "index");
+$options->get("/{status:(closed|new|progress)}", "now");
+$options->get("/{date:[0-9-]+}", "index");
+$options->get("/{date:[0-9-]+}/{status:(closed|new|progress)}", "index");
+$app->mount($options);
+
 $app->notFound(function () {
     echo json_encode(["success" => false, "error" => 404]);
 });
