@@ -39,7 +39,7 @@ export default function IssueHistory(props) {
     }
     const key_prefix = "index-issue-" + props.issue_id + "history-entry-";
     return ([
-            <Button key={key_prefix + "button"} onClick={handleOpen} color="secondary" variant={"outlined"}>History</Button>,
+            <Button fullWidth={true} key={key_prefix + "button"} onClick={handleOpen} color="secondary" variant={"outlined"}>History</Button>,
             <Modal
                 aria-labelledby="transition-modal-title"
                 aria-describedby="transition-modal-description"
